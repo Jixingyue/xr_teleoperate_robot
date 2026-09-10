@@ -1,0 +1,107 @@
+# 机器人配置文件
+# 包含所有支持的机器人类型的配置参数
+# 通用配置在代码中使用固定值
+Franka_Panda:
+  urdf_path: 'assets/franka_description/panda_with_gripper.urdf'
+  urdf_dir: 'assets/franka_description/'
+  urdf_path_test: 'assets/franka_description/panda_with_gripper.urdf'
+  urdf_dir_test: 'assets/franka_description/'
+  arm_joints:
+    - name: 'panda_joint1'
+      index: 0
+    - name: 'panda_joint2'
+      index: 1
+    - name: 'panda_joint3'
+      index: 2
+    - name: 'panda_joint4'
+      index: 3
+    - name: 'panda_joint5'
+      index: 4
+    - name: 'panda_joint6'
+      index: 5
+    - name: 'panda_joint7'
+      index: 6
+  gripper_joints:
+    - name: 'panda_finger_joint1'
+      index: 8
+    - name: 'panda_finger_joint2'
+      index: 9
+  joints_to_lock:
+    - "panda_finger_joint1"
+    - "panda_finger_joint2"
+  end_effectors:
+    - name: 'R_ee'
+      end_joint: 'panda_joint7'
+      end_link: 'panda_hand'
+      offset: [0.05, 0, 0]
+  arm_scaling:
+    human_length: 0.65
+    robot_length: 0.55 
+
+UR3E:
+  urdf_path: 'assets/ur_description/ur3e/ur3e.urdf'
+  urdf_dir: 'assets/ur_description/ur3e/'
+  urdf_path_test: 'assets/ur_description/ur3e/ur3e.urdf'
+  urdf_dir_test: 'assets/ur_description/ur3e/'
+  #增加关节索引
+  arm_joints:
+    - name: 'shoulder_pan_joint'
+      index: 0
+    - name: 'shoulder_lift_joint'
+      index: 1
+    - name: 'elbow_joint'
+      index: 2
+    - name: 'wrist_1_joint'
+      index: 3
+    - name: 'wrist_2_joint'
+      index: 4
+    - name: 'wrist_3_joint'
+      index: 5
+  end_effectors:
+    - name: 'R_ee'
+      end_joint: 'wrist_3_joint'
+      end_link: 'wrist_3_link'
+      offset: [0.05, 0, 0]
+  arm_scaling:
+    human_length: 0.65
+    robot_length: 0.75 
+  joint_limits:
+    - [-6.283185307179586, 6.283185307179586]  # shoulder_pan_joint
+    - [-6.283185307179586, 6.283185307179586]  # shoulder_lift_joint
+    - [-3.141592653589793, 3.141592653589793]  # elbow_joint
+    - [-6.283185307179586, 6.283185307179586]  # wrist_1_joint
+    - [-6.283185307179586, 6.283185307179586]  # wrist_2_joint
+    - [-6.283185307179586, 6.283185307179586]  # wrist_3_joint (默认±2π，因为URDF中没有明确限制)
+AUBO_I5:
+  urdf_path: 'assets/aubo_description/urdf/aubo_i5_r.urdf'
+  urdf_dir: 'assets/aubo_description/urdf/'
+  urdf_path_test: 'assets/aubo_description/urdf/aubo_i5_r.urdf'
+  urdf_dir_test: 'assets/aubo_description/urdf/'
+  arm_joints:
+    - name: 'r_shoulder_joint'
+      index: 0
+    - name: 'r_upperArm_joint'
+      index: 1
+    - name: 'r_foreArm_joint'
+      index: 2
+    - name: 'r_wrist1_joint'
+      index: 3
+    - name: 'r_wrist2_joint'
+      index: 4
+    - name: 'r_wrist3_joint'
+      index: 5
+  end_effectors:
+    - name: 'R_ee'
+      end_joint: 'r_wrist3_joint'
+      end_link: 'r_wrist3_Link'
+      offset: [0.05, 0, 0]
+  arm_scaling:
+    human_length: 0.65
+    robot_length: 0.65 
+  joint_limits:
+    - [-1.0471975512, 1.0471975512]  # r_shoulder_joint
+    - [-6.283185307179586, 6.283185307179586]  # r_upperArm_joint
+    - [-6.283185307179586, 6.283185307179586]  # r_foreArm_joint
+    - [1.0471975512, 2.96705972839]  # r_wrist1_joint 60-170
+    - [-6.283185307179586, 6.283185307179586]  # r_wrist2_joint
+    - [-1.5707963268, 1.5707963268]  # r_wrist3_joint
