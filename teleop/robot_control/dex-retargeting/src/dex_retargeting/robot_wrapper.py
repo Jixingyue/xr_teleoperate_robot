@@ -7,11 +7,11 @@ import pinocchio as pin
 
 class RobotWrapper:
     """
-    This class does not take mimic joint into consideration
+    本类不考虑 mimic 关节
     """
 
     def __init__(self, urdf_path: str, use_collision=False, use_visual=False):
-        # Create robot model and data
+        # 创建机器人模型和数据
         self.model: pin.Model = pin.buildModelFromUrdf(urdf_path)
         self.data: pin.Data = self.model.createData()
 
@@ -23,7 +23,7 @@ class RobotWrapper:
             raise NotImplementedError(f"Can not handle robot with special joint.")
 
     # -------------------------------------------------------------------------- #
-    # Robot property
+    # 机器人属性
     # -------------------------------------------------------------------------- #
     @property
     def joint_names(self) -> List[str]:
@@ -52,7 +52,7 @@ class RobotWrapper:
         return np.stack([lower, upper], axis=1)
 
     # -------------------------------------------------------------------------- #
-    # Query function
+    # 查询函数
     # -------------------------------------------------------------------------- #
     def get_joint_index(self, name: str):
         return self.dof_joint_names.index(name)
@@ -75,7 +75,7 @@ class RobotWrapper:
         return parent_id, child_id
 
     # -------------------------------------------------------------------------- #
-    # Kinematics function
+    # 运动学函数
     # -------------------------------------------------------------------------- #
     def compute_forward_kinematics(self, qpos: npt.NDArray):
         pin.forwardKinematics(self.model, self.data, qpos)

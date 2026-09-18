@@ -48,7 +48,7 @@ class HandRetargeting:
             self.right_indices = self.right_retargeting.optimizer.target_link_human_indices
 
             if hand_type == HandType.UNITREE_DEX3 or hand_type == HandType.UNITREE_DEX3_Unit_Test:
-                # In section "Sort by message structure" of https://support.unitree.com/home/en/G1_developer/dexterous_hand
+                # 参见 https://support.unitree.com/home/en/G1_developer/dexterous_hand 的“按消息结构排序（Sort by message structure）”一节
                 self.left_dex3_api_joint_names  = [ 'left_hand_thumb_0_joint', 'left_hand_thumb_1_joint', 'left_hand_thumb_2_joint',
                                                     'left_hand_middle_0_joint', 'left_hand_middle_1_joint', 
                                                     'left_hand_index_0_joint', 'left_hand_index_1_joint' ]
@@ -59,7 +59,7 @@ class HandRetargeting:
                 self.right_dex_retargeting_to_hardware = [ self.right_retargeting_joint_names.index(name) for name in self.right_dex3_api_joint_names]
 
             elif hand_type == HandType.INSPIRE_HAND or hand_type == HandType.INSPIRE_HAND_Unit_Test:
-                # "Joint Motor Sequence" of https://support.unitree.com/home/en/G1_developer/inspire_dfx_dexterous_hand
+                # 参见 https://support.unitree.com/home/en/G1_developer/inspire_dfx_dexterous_hand 的“关节电机顺序（Joint Motor Sequence）”
                 self.left_inspire_api_joint_names  = [ 'L_pinky_proximal_joint', 'L_ring_proximal_joint', 'L_middle_proximal_joint',
                                                        'L_index_proximal_joint', 'L_thumb_proximal_pitch_joint', 'L_thumb_proximal_yaw_joint' ]
                 self.right_inspire_api_joint_names = [ 'R_pinky_proximal_joint', 'R_ring_proximal_joint', 'R_middle_proximal_joint',
@@ -68,7 +68,7 @@ class HandRetargeting:
                 self.right_dex_retargeting_to_hardware = [ self.right_retargeting_joint_names.index(name) for name in self.right_inspire_api_joint_names]
             
             elif hand_type == HandType.BRAINCO_HAND or hand_type == HandType.BRAINCO_HAND_Unit_Test:
-                # "Driver Motor ID" of https://www.brainco-hz.com/docs/revolimb-hand/product/parameters.html
+                # 参见 https://www.brainco-hz.com/docs/revolimb-hand/product/parameters.html 的“驱动电机 ID（Driver Motor ID）”
                 self.left_brainco_api_joint_names  = [ 'left_thumb_metacarpal_joint', 'left_thumb_proximal_joint', 'left_index_proximal_joint',
                                                        'left_middle_proximal_joint', 'left_ring_proximal_joint', 'left_pinky_proximal_joint' ]
                 self.right_brainco_api_joint_names = [ 'right_thumb_metacarpal_joint', 'right_thumb_proximal_joint', 'right_index_proximal_joint',

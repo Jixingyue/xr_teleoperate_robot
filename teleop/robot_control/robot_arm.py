@@ -247,7 +247,7 @@ class UR3E_ArmController(RobotArmController):
         with self.ctrl_lock:
             self.q_target = np.zeros(self.num_joints)
             self.tauff_target = np.zeros(self.num_joints)
-        tolerance = 0.05  # Tolerance threshold for joint angles to determine "close to zero", can be adjusted based on your motor's precision requirements
+        tolerance = 0.05  # 用于判断关节角是否“接近零”的容差阈值，可根据电机的精度要求调整
         while current_attempts < max_attempts:
             current_q = self.get_current_dual_arm_q()
             if np.all(np.abs(current_q) < tolerance):

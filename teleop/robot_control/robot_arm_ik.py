@@ -249,7 +249,7 @@ class RobotArmIK:
                 )
             )
     
-    # If the robot arm is not the same size as your arm :)
+    # 如果机器人臂与你的手臂尺寸不一样 :)
     def scale_arms(self, human_left_pose, human_right_pose, human_arm_length=0.60, robot_arm_length=0.75):
         scale_factor = robot_arm_length / human_arm_length
         if human_left_pose is None:

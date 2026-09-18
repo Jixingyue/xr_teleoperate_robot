@@ -1,4 +1,4 @@
-# Code from yourdfpy with small modification for deprecated warning
+# 代码来自 yourdfpy，针对弃用警告做了小幅修改
 # Source: https://github.com/clemense/yourdfpy/blob/main/src/yourdfpy/urdf.py
 
 import copy
@@ -49,7 +49,7 @@ class TransmissionJoint:
 class Actuator:
     name: str
     mechanical_reduction: Optional[float] = None
-    # The follwing is only valid for ROS Indigo and prior versions
+    # 以下内容仅对 ROS Indigo 及更早版本有效
     hardware_interfaces: List[str] = field(default_factory=list)
 
     def __eq__(self, other):
@@ -177,7 +177,7 @@ class Material:
 class Visual:
     name: Optional[str] = None
     origin: Optional[np.ndarray] = None
-    geometry: Optional[Geometry] = None  # That's not really optional according to ROS
+    geometry: Optional[Geometry] = None  # 按照 ROS 的规定，该字段实际上不是可选的
     material: Optional[Material] = None
 
     def __eq__(self, other):
@@ -311,7 +311,7 @@ class Robot:
 
 
 class URDFError(Exception):
-    """General URDF exception."""
+    """URDF 通用异常。"""
 
     def __init__(self, msg):
         super(URDFError, self).__init__()
@@ -325,49 +325,49 @@ class URDFError(Exception):
 
 
 class URDFIncompleteError(URDFError):
-    """Raised when needed data for an object isn't there."""
+    """当对象所需的数据缺失时抛出。"""
 
     pass
 
 
 class URDFAttributeValueError(URDFError):
-    """Raised when attribute value is not contained in the set of allowed values."""
+    """当属性值不在允许取值集合内时抛出。"""
 
     pass
 
 
 class URDFBrokenRefError(URDFError):
-    """Raised when a referenced object is not found in the scope."""
+    """当在作用域内找不到被引用的对象时抛出。"""
 
     pass
 
 
 class URDFMalformedError(URDFError):
-    """Raised when data is found to be corrupted in some way."""
+    """当发现数据以某种方式损坏时抛出。"""
 
     pass
 
 
 class URDFUnsupportedError(URDFError):
-    """Raised when some unexpectedly unsupported feature is found."""
+    """当遇到意料之外的不受支持的特性时抛出。"""
 
     pass
 
 
 class URDFSaveValidationError(URDFError):
-    """Raised when XML validation fails when saving."""
+    """当保存时 XML 校验失败时抛出。"""
 
     pass
 
 
 def _str2float(s):
-    """Cast string to float if it is not None. Otherwise return None.
+    """当字符串不为 None 时将其转换为 float，否则返回 None。
 
-    Args:
-        s (str): String to convert or None.
+    参数:
+        s (str): 待转换的字符串，或 None。
 
-    Returns:
-        str or NoneType: The converted string or None.
+    返回:
+        str or NoneType: 转换后的结果，或 None。
     """
     return float(s) if s is not None else None
 
@@ -377,12 +377,12 @@ def apply_visual_color(
     visual: Visual,
     material_map: Dict[str, Material],
 ) -> None:
-    """Apply the color of the visual material to the mesh.
+    """将可视化材质的颜色应用到网格上。
 
-    Args:
-        geom: Trimesh to color.
-        visual: Visual description from XML.
-        material_map: Dictionary mapping material names to their definitions.
+    参数:
+        geom: 待着色的 Trimesh。
+        visual: 来自 XML 的可视化描述。
+        material_map: 将材质名称映射到其定义的字典。
     """
     if visual.material is None:
         return
@@ -401,25 +401,25 @@ def apply_visual_color(
 
 
 def filename_handler_null(fname):
-    """A lazy filename handler that simply returns its input.
+    """一个惰性文件名处理器，直接返回其输入。
 
-    Args:
-        fname (str): A file name.
+    参数:
+        fname (str): 文件名。
 
-    Returns:
-        str: Same file name.
+    返回:
+        str: 相同的文件名。
     """
     return fname
 
 
 def filename_handler_ignore_directive(fname):
-    """A filename handler that removes anything before (and including) '://'.
+    """一个文件名处理器，移除 '://' 之前（含 '://'）的所有内容。
 
-    Args:
-        fname (str): A file name.
+    参数:
+        fname (str): 文件名。
 
-    Returns:
-        str: The file name without the prefix.
+    返回:
+        str: 去掉前缀后的文件名。
     """
     if "://" in fname or ":\\\\" in fname:
         return ":".join(fname.split(":")[1:])[2:]
@@ -427,14 +427,14 @@ def filename_handler_ignore_directive(fname):
 
 
 def filename_handler_ignore_directive_package(fname):
-    """A filename handler that removes the 'package://' directive and the package it refers to.
-    It subsequently calls filename_handler_ignore_directive, i.e., it removes any other directive.
+    """一个文件名处理器，移除 'package://' 指令及其所指向的包名。
+    随后它会调用 filename_handler_ignore_directive，即移除任何其他指令。
 
-    Args:
-        fname (str): A file name.
+    参数:
+        fname (str): 文件名。
 
-    Returns:
-        str: The file name without 'package://' and the package name.
+    返回:
+        str: 去掉 'package://' 和包名后的文件名。
     """
     if fname.startswith("package://"):
         string_length = len("package://")
@@ -443,43 +443,43 @@ def filename_handler_ignore_directive_package(fname):
 
 
 def filename_handler_add_prefix(fname, prefix):
-    """A filename handler that adds a prefix.
+    """一个添加前缀的文件名处理器。
 
-    Args:
-        fname (str): A file name.
-        prefix (str): A prefix.
+    参数:
+        fname (str): 文件名。
+        prefix (str): 前缀。
 
-    Returns:
-        str: Prefix plus file name.
+    返回:
+        str: 前缀加文件名。
     """
     return prefix + fname
 
 
 def filename_handler_absolute2relative(fname, dir):
-    """A filename handler that turns an absolute file name into a relative one.
+    """一个将绝对文件名转换为相对文件名的文件名处理器。
 
-    Args:
-        fname (str): A file name.
-        dir (str): A directory.
+    参数:
+        fname (str): 文件名。
+        dir (str): 目录。
 
-    Returns:
-        str: The file name relative to the directory.
+    返回:
+        str: 相对于该目录的文件名。
     """
-    # TODO: that's not right
+    # TODO: 这样做不对
     if fname.startswith(dir):
         return fname[len(dir) :]
     return fname
 
 
 def filename_handler_relative(fname, dir):
-    """A filename handler that joins a file name with a directory.
+    """一个将文件名与目录拼接的文件名处理器。
 
-    Args:
-        fname (str): A file name.
-        dir (str): A directory.
+    参数:
+        fname (str): 文件名。
+        dir (str): 目录。
 
-    Returns:
-        str: The directory joined with the file name.
+    返回:
+        str: 目录与文件名拼接后的结果。
     """
     return os.path.join(dir, filename_handler_ignore_directive_package(fname))
 
@@ -506,14 +506,14 @@ def _create_filename_handlers_to_urdf_file_recursive(urdf_fname):
 
 
 def filename_handler_meta(fname, filename_handlers):
-    """A filename handler that calls other filename handlers until the resulting file name points to an existing file.
+    """一个文件名处理器，依次调用其他文件名处理器，直到得到的文件名指向一个已存在的文件。
 
-    Args:
-        fname (str): A file name.
-        filename_handlers (list(fn)): A list of function pointers to filename handlers.
+    参数:
+        fname (str): 文件名。
+        filename_handlers (list(fn)): 指向各文件名处理器的函数指针列表。
 
-    Returns:
-        str: The resolved file name that points to an existing file or the input if none of the files exists.
+    返回:
+        str: 解析出的指向已存在文件的文件名；若所有文件都不存在，则返回输入。
     """
     for fn in filename_handlers:
         candidate_fname = fn(fname=fname)
@@ -525,14 +525,14 @@ def filename_handler_meta(fname, filename_handlers):
 
 
 def filename_handler_magic(fname, dir):
-    """A magic filename handler.
+    """一个有魔法的文件名处理器。
 
-    Args:
-        fname (str): A file name.
-        dir (str): A directory.
+    参数:
+        fname (str): 文件名。
+        dir (str): 目录。
 
-    Returns:
-        str: The file name that exists or the input if nothing is found.
+    返回:
+        str: 已存在的文件名；若什么都没找到则返回输入。
     """
     return filename_handler_meta(
         fname=fname,
@@ -545,13 +545,13 @@ def filename_handler_magic(fname, dir):
 
 
 def validation_handler_strict(errors):
-    """A validation handler that does not allow any errors.
+    """一个不允许出现任何错误的校验处理器。
 
-    Args:
-        errors (list[yourdfpy.URDFError]): List of errors.
+    参数:
+        errors (list[yourdfpy.URDFError]): 错误列表。
 
-    Returns:
-        bool: Whether any errors were found.
+    返回:
+        bool: 是否发现了错误。
     """
     return len(errors) == 0
 
@@ -570,19 +570,19 @@ class URDF:
         force_collision_mesh: bool = True,
         build_tree: bool = False,
     ):
-        """A URDF model.
+        """一个 URDF 模型。
 
-        Args:
-            robot (Robot): The robot model. Defaults to None.
-            build_scene_graph (bool, optional): Wheter to build a scene graph to enable transformation queries and forward kinematics. Defaults to True.
-            build_collision_scene_graph (bool, optional): Wheter to build a scene graph for <collision> elements. Defaults to False.
-            load_meshes (bool, optional): Whether to load the meshes referenced in the <mesh> elements. Defaults to True.
-            load_collision_meshes (bool, optional): Whether to load the collision meshes referenced in the <mesh> elements. Defaults to False.
-            filename_handler ([type], optional): Any function f(in: str) -> str, that maps filenames in the URDF to actual resources. Can be used to customize treatment of `package://` directives or relative/absolute filenames. Defaults to None.
-            mesh_dir (str, optional): A root directory used for loading meshes. Defaults to "".
-            force_mesh (bool, optional): Each loaded geometry will be concatenated into a single one (instead of being turned into a graph; in case the underlying file contains multiple geometries). This might loose texture information but the resulting scene graph will be smaller. Defaults to False.
-            force_collision_mesh (bool, optional): Same as force_mesh, but for collision scene. Defaults to True.
-            build_tree (bool, optional): Build the tree structure for global kinematics computation
+        参数:
+            robot (Robot): 机器人模型。默认为 None。
+            build_scene_graph (bool, optional): 是否构建场景图，以启用变换查询和正运动学。默认为 True。
+            build_collision_scene_graph (bool, optional): 是否为 <collision> 元素构建场景图。默认为 False。
+            load_meshes (bool, optional): 是否加载 <mesh> 元素中引用的网格。默认为 True。
+            load_collision_meshes (bool, optional): 是否加载 <mesh> 元素中引用的碰撞网格。默认为 False。
+            filename_handler ([type], optional): 任意形如 f(in: str) -> str 的函数，用于将 URDF 中的文件名映射到实际资源。可用于自定义对 `package://` 指令或相对/绝对文件名的处理。默认为 None。
+            mesh_dir (str, optional): 用于加载网格的根目录。默认为 ""。
+            force_mesh (bool, optional): 每个加载的几何体都将被拼接成单个几何体（而不是转换为图结构；以防底层文件包含多个几何体）。这可能会丢失纹理信息，但生成的场景图会更小。默认为 False。
+            force_collision_mesh (bool, optional): 与 force_mesh 相同，但用于碰撞场景。默认为 True。
+            build_tree (bool, optional): 构建用于全局运动学计算的树结构
         """
         if filename_handler is None:
             self._filename_handler = partial(filename_handler_magic, dir=mesh_dir)
@@ -629,100 +629,100 @@ class URDF:
 
     @property
     def scene(self) -> trimesh.Scene:
-        """A scene object representing the URDF model.
+        """表示该 URDF 模型的场景对象。
 
-        Returns:
-            trimesh.Scene: A trimesh scene object.
+        返回:
+            trimesh.Scene: 一个 trimesh 场景对象。
         """
         return self._scene
 
     @property
     def collision_scene(self) -> trimesh.Scene:
-        """A scene object representing the <collision> elements of the URDF model
+        """表示该 URDF 模型中 <collision> 元素的场景对象
 
-        Returns:
-            trimesh.Scene: A trimesh scene object.
+        返回:
+            trimesh.Scene: 一个 trimesh 场景对象。
         """
         return self._scene_collision
 
     @property
     def link_map(self) -> dict:
-        """A dictionary mapping link names to link objects.
+        """将连杆名称映射到连杆对象的字典。
 
-        Returns:
-            dict: Mapping from link name (str) to Link.
+        返回:
+            dict: 从连杆名称 (str) 到 Link 的映射。
         """
         return self._link_map
 
     @property
     def joint_map(self) -> dict:
-        """A dictionary mapping joint names to joint objects.
+        """将关节名称映射到关节对象的字典。
 
-        Returns:
-            dict: Mapping from joint name (str) to Joint.
+        返回:
+            dict: 从关节名称 (str) 到 Joint 的映射。
         """
         return self._joint_map
 
     @property
     def joint_names(self):
-        """List of joint names.
+        """关节名称列表。
 
-        Returns:
-            list[str]: List of joint names of the URDF model.
+        返回:
+            list[str]: 该 URDF 模型的关节名称列表。
         """
         return [j.name for j in self.robot.joints]
 
     @property
     def actuated_joints(self):
-        """List of actuated joints. This excludes mimic and fixed joints.
+        """驱动关节列表。不包括 mimic 关节和固定关节。
 
-        Returns:
-            list[Joint]: List of actuated joints of the URDF model.
+        返回:
+            list[Joint]: 该 URDF 模型的驱动关节列表。
         """
         return self._actuated_joints
 
     @property
     def actuated_dof_indices(self):
-        """List of DOF indices per actuated joint. Can be used to reference configuration.
+        """每个驱动关节对应的自由度（DOF）索引列表。可用于引用配置。
 
-        Returns:
-            list[list[int]]: List of DOF indices per actuated joint.
+        返回:
+            list[list[int]]: 每个驱动关节对应的 DOF 索引列表。
         """
         return self._actuated_dof_indices
 
     @property
     def actuated_joint_indices(self):
-        """List of indices of all joints that are actuated, i.e., not of type mimic or fixed.
+        """所有驱动关节（即类型不是 mimic 或 fixed 的关节）的索引列表。
 
-        Returns:
-            list[int]: List of indices of actuated joints.
+        返回:
+            list[int]: 驱动关节的索引列表。
         """
         return self._actuated_joint_indices
 
     @property
     def actuated_joint_names(self):
-        """List of names of actuated joints. This excludes mimic and fixed joints.
+        """驱动关节的名称列表。不包括 mimic 关节和固定关节。
 
-        Returns:
-            list[str]: List of names of actuated joints of the URDF model.
+        返回:
+            list[str]: 该 URDF 模型的驱动关节名称列表。
         """
         return [j.name for j in self._actuated_joints]
 
     @property
     def num_actuated_joints(self):
-        """Number of actuated joints.
+        """驱动关节的数量。
 
-        Returns:
-            int: Number of actuated joints.
+        返回:
+            int: 驱动关节的数量。
         """
         return len(self.actuated_joints)
 
     @property
     def num_dofs(self):
-        """Number of degrees of freedom of actuated joints. Depending on the type of the joint, the number of DOFs might vary.
+        """驱动关节的自由度数量。根据关节类型的不同，DOF 数量可能有所不同。
 
-        Returns:
-            int: Degrees of freedom.
+        返回:
+            int: 自由度数量。
         """
         total_num_dofs = 0
         for j in self._actuated_joints:
@@ -736,19 +736,19 @@ class URDF:
 
     @property
     def zero_cfg(self):
-        """Return the zero configuration.
+        """返回零位配置。
 
-        Returns:
-            np.ndarray: The zero configuration.
+        返回:
+            np.ndarray: 零位配置。
         """
         return np.zeros(self.num_dofs)
 
     @property
     def center_cfg(self):
-        """Return center configuration of URDF model by using the average of each joint's limits if present, otherwise zero.
+        """返回 URDF 模型的居中配置：若关节有限位则取各关节上下限位的中点，否则取零。
 
-        Returns:
-            (n), float: Default configuration of URDF model.
+        返回:
+            (n), float: URDF 模型的默认配置。
         """
         config = []
         config_names = []
@@ -779,40 +779,40 @@ class URDF:
 
     @property
     def cfg(self):
-        """Current configuration.
+        """当前配置。
 
-        Returns:
-            np.ndarray: Current configuration of URDF model.
+        返回:
+            np.ndarray: URDF 模型的当前配置。
         """
         return self._cfg
 
     @property
     def base_link(self):
-        """Name of URDF base/root link.
+        """URDF 基座/根连杆的名称。
 
-        Returns:
-            str: Name of base link of URDF model.
+        返回:
+            str: URDF 模型基座连杆的名称。
         """
         return self._base_link
 
     @property
     def errors(self) -> list:
-        """A list with validation errors.
+        """包含校验错误的列表。
 
-        Returns:
-            list: A list of validation errors.
+        返回:
+            list: 校验错误列表。
         """
         return self._errors
 
     def clear_errors(self):
-        """Clear the validation error log."""
+        """清空校验错误日志。"""
         self._errors = []
 
     def show(self, collision_geometry=False, callback=None):
-        """Open a simpler viewer displaying the URDF model.
+        """打开一个简单的查看器来显示该 URDF 模型。
 
-        Args:
-            collision_geometry (bool, optional): Whether to display the <collision> or <visual> elements. Defaults to False.
+        参数:
+            collision_geometry (bool, optional): 显示 <collision> 元素还是 <visual> 元素。默认为 False。
         """
         if collision_geometry:
             if self._scene_collision is None:
@@ -832,13 +832,13 @@ class URDF:
                 self._scene.show(callback=callback)
 
     def validate(self, validation_fn=None) -> bool:
-        """Validate URDF model.
+        """校验 URDF 模型。
 
-        Args:
-            validation_fn (function, optional): A function f(list[yourdfpy.URDFError]) -> bool. None uses the strict handler (any error leads to False). Defaults to None.
+        参数:
+            validation_fn (function, optional): 形如 f(list[yourdfpy.URDFError]) -> bool 的函数。为 None 时使用严格处理器（任何错误都会导致返回 False）。默认为 None。
 
-        Returns:
-            bool: Whether the model is valid.
+        返回:
+            bool: 模型是否有效。
         """
         self._errors = []
         self._validate_robot(self.robot)
@@ -894,24 +894,24 @@ class URDF:
 
     @staticmethod
     def load(fname_or_file, add_dummy_free_joints=False, **kwargs):
-        """Load URDF file from filename or file object.
+        """从文件名或文件对象加载 URDF 文件。
 
-        Args:
-            fname_or_file (str or file object): A filename or file object, file-like object, stream representing the URDF file.
-            **build_scene_graph (bool, optional): Wheter to build a scene graph to enable transformation queries and forward kinematics. Defaults to True.
-            **build_collision_scene_graph (bool, optional): Wheter to build a scene graph for <collision> elements. Defaults to False.
-            **load_meshes (bool, optional): Whether to load the meshes referenced in the <mesh> elements. Defaults to True.
-            **load_collision_meshes (bool, optional): Whether to load the collision meshes referenced in the <mesh> elements. Defaults to False.
-            **filename_handler ([type], optional): Any function f(in: str) -> str, that maps filenames in the URDF to actual resources. Can be used to customize treatment of `package://` directives or relative/absolute filenames. Defaults to None.
-            **mesh_dir (str, optional): A root directory used for loading meshes. Defaults to "".
-            **force_mesh (bool, optional): Each loaded geometry will be concatenated into a single one (instead of being turned into a graph; in case the underlying file contains multiple geometries). This might loose texture information but the resulting scene graph will be smaller. Defaults to False.
-            **force_collision_mesh (bool, optional): Same as force_mesh, but for collision scene. Defaults to True.
+        参数:
+            fname_or_file (str or file object): 表示 URDF 文件的文件名、文件对象、类文件对象或流。
+            **build_scene_graph (bool, optional): 是否构建场景图，以启用变换查询和正运动学。默认为 True。
+            **build_collision_scene_graph (bool, optional): 是否为 <collision> 元素构建场景图。默认为 False。
+            **load_meshes (bool, optional): 是否加载 <mesh> 元素中引用的网格。默认为 True。
+            **load_collision_meshes (bool, optional): 是否加载 <mesh> 元素中引用的碰撞网格。默认为 False。
+            **filename_handler ([type], optional): 任意形如 f(in: str) -> str 的函数，用于将 URDF 中的文件名映射到实际资源。可用于自定义对 `package://` 指令或相对/绝对文件名的处理。默认为 None。
+            **mesh_dir (str, optional): 用于加载网格的根目录。默认为 ""。
+            **force_mesh (bool, optional): 每个加载的几何体都将被拼接成单个几何体（而不是转换为图结构；以防底层文件包含多个几何体）。这可能会丢失纹理信息，但生成的场景图会更小。默认为 False。
+            **force_collision_mesh (bool, optional): 与 force_mesh 相同，但用于碰撞场景。默认为 True。
 
-        Raises:
-            ValueError: If filename does not exist.
+        异常:
+            ValueError: 文件名不存在时抛出。
 
-        Returns:
-            yourdfpy.URDF: URDF model.
+        返回:
+            yourdfpy.URDF: URDF 模型。
         """
         if isinstance(fname_or_file, six.string_types):
             if not os.path.isfile(fname_or_file):
@@ -931,19 +931,19 @@ class URDF:
             events = ("start", "end", "start-ns", "end-ns")
             xml = etree.iterparse(fname_or_file, recover=True, events=events)
 
-            # Iterate through all XML elements
+            # 遍历所有 XML 元素
             for action, elem in xml:
-                # Skip comments and processing instructions,
-                # because they do not have names
+                # 跳过注释和处理指令，
+                # 因为它们没有名称
                 if not (isinstance(elem, etree._Comment) or isinstance(elem, etree._ProcessingInstruction)):
-                    # Remove a namespace URI in the element's name
+                    # 移除元素名称中的命名空间 URI
                     # elem.tag = etree.QName(elem).localname
                     if action == "end" and ":" in elem.tag:
                         elem.getparent().remove(elem)
 
             xml_root = xml.root
 
-        # Remove comments
+        # 移除注释
         etree.strip_tags(xml_root, etree.Comment)
         etree.cleanup_namespaces(xml_root)
 
@@ -952,15 +952,15 @@ class URDF:
         )
 
     def contains(self, key, value, element=None) -> bool:
-        """Checks recursively whether the URDF tree contains the provided key-value pair.
+        """递归检查 URDF 树中是否包含给定的键值对。
 
-        Args:
-            key (str): A key.
-            value (str): A value.
-            element (etree.Element, optional): The XML element from which to start the recursive search. None means URDF root. Defaults to None.
+        参数:
+            key (str): 键。
+            value (str): 值。
+            element (etree.Element, optional): 递归搜索的起始 XML 元素。为 None 时表示从 URDF 根开始。默认为 None。
 
-        Returns:
-            bool: Whether the key-value pair was found.
+        返回:
+            bool: 是否找到了该键值对。
         """
         if element is None:
             element = self.robot
@@ -979,11 +979,11 @@ class URDF:
         return result
 
     def _determine_base_link(self):
-        """Get the base link of the URDF tree by extracting all links without parents.
-        In case multiple links could be root chose the first.
+        """通过提取所有没有父级的连杆来获取 URDF 树的基座连杆。
+        如果有多个连杆可能成为根，则选择第一个。
 
-        Returns:
-            str: Name of the base link.
+        返回:
+            str: 基座连杆的名称。
         """
         link_names = [l.name for l in self.robot.links]
 
@@ -991,7 +991,7 @@ class URDF:
             link_names.remove(j.child)
 
         if len(link_names) == 0:
-            # raise Error?
+            # 要抛出错误吗？
             return None
 
         return link_names[0]
@@ -1011,7 +1011,7 @@ class URDF:
 
         if joint.type in ["revolute", "prismatic", "continuous"]:
             if q is None:
-                # Use internal cfg vector for forward kinematics
+                # 使用内部 cfg 向量进行正运动学计算
                 q = float(self.cfg[self.actuated_dof_indices[self.actuated_joint_names.index(joint.name)]])
 
             if joint.type == "prismatic":
@@ -1019,20 +1019,20 @@ class URDF:
             else:
                 matrix = origin @ tra.rotation_matrix(q, joint.axis)
         else:
-            # this includes: floating, planar, fixed
+            # 包括以下类型：floating、planar、fixed
             matrix = origin
 
         return matrix, q
 
     def update_cfg(self, configuration):
-        """Update joint configuration of URDF; does forward kinematics.
+        """更新 URDF 的关节配置，并执行正运动学计算。
 
-        Args:
-            configuration (dict, list[float], tuple[float] or np.ndarray): A mapping from joints or joint names to configuration values, or a list containing a value for each actuated joint.
+        参数:
+            configuration (dict, list[float], tuple[float] or np.ndarray): 从关节或关节名称到配置值的映射，或者是一个列表，依次包含每个驱动关节的值。
 
-        Raises:
-            ValueError: Raised if dimensionality of configuration does not match number of actuated joints of URDF model.
-            TypeError: Raised if configuration is neither a dict, list, tuple or np.ndarray.
+        异常:
+            ValueError: 当配置的维度与 URDF 模型驱动关节数量不匹配时抛出。
+            TypeError: 当配置既不是 dict、list、tuple 也不是 np.ndarray 时抛出。
         """
         joint_cfg = []
 
@@ -1041,7 +1041,7 @@ class URDF:
                 if isinstance(joint, six.string_types):
                     joint_cfg.append((self._joint_map[joint], configuration[joint]))
                 elif isinstance(joint, Joint):
-                    # TODO: Joint is not hashable; so this branch will not succeed
+                    # TODO: Joint 不可哈希，因此该分支不会成功
                     joint_cfg.append((joint, configuration[joint]))
         elif isinstance(configuration, (list, tuple, np.ndarray)):
             if len(configuration) == len(self.robot.joints):
@@ -1057,11 +1057,11 @@ class URDF:
         else:
             raise TypeError("Invalid type for configuration")
 
-        # append all mimic joints in the update
+        # 在更新时追加所有 mimic 关节
         for j, q in joint_cfg + [(j, 0.0) for j in self.robot.joints if j.mimic is not None]:
             matrix, joint_q = self._forward_kinematics_joint(j, q=q)
 
-            # update internal configuration vector - only consider actuated joints
+            # 更新内部配置向量——仅考虑驱动关节
             if j.name in self.actuated_joint_names:
                 self._cfg[self.actuated_dof_indices[self.actuated_joint_names.index(j.name)]] = joint_q
 
@@ -1071,18 +1071,18 @@ class URDF:
                 self._scene_collision.graph.update(frame_from=j.parent, frame_to=j.child, matrix=matrix)
 
     def get_transform(self, frame_to, frame_from=None, collision_geometry=False):
-        """Get the transform from one frame to another.
+        """获取从一个坐标系到另一个坐标系的变换。
 
-        Args:
-            frame_to (str): Node name.
-            frame_from (str, optional): Node name. If None it will be set to self.base_frame. Defaults to None.
-            collision_geometry (bool, optional): Whether to use the collision geometry scene graph (instead of the visual geometry). Defaults to False.
+        参数:
+            frame_to (str): 节点名称。
+            frame_from (str, optional): 节点名称。为 None 时将被设置为 self.base_frame。默认为 None。
+            collision_geometry (bool, optional): 是否使用碰撞几何体场景图（而非可视化几何体场景图）。默认为 False。
 
-        Raises:
-            ValueError: Raised if scene graph wasn't constructed during intialization.
+        异常:
+            ValueError: 当初始化期间未构建场景图时抛出。
 
-        Returns:
-            (4, 4) float: Homogeneous transformation matrix
+        返回:
+            (4, 4) float: 齐次变换矩阵
         """
         if collision_geometry:
             if self._scene_collision is None:
@@ -1142,7 +1142,7 @@ class URDF:
                         skip_materials=skip_materials,
                     )
 
-                    # add original filename
+                    # 添加原始文件名
                     if "file_path" not in new_g.metadata:
                         new_g.metadata["file_path"] = os.path.abspath(new_filename)
                         new_g.metadata["file_name"] = os.path.basename(new_filename)
@@ -1164,7 +1164,7 @@ class URDF:
                                 geom.metadata["file_name"] = new_s.metadata["file_name"]
                                 geom.metadata["file_element"] = i
 
-                # scale mesh appropriately
+                # 对网格进行适当缩放
                 if geometry.mesh.scale is not None:
                     if isinstance(geometry.mesh.scale, float):
                         new_s = new_s.scaled(geometry.mesh.scale)
@@ -1216,8 +1216,8 @@ class URDF:
                                 transform=origin @ new_s.graph.get(name)[0],
                             )
                     else:
-                        # The following map is used to deal with glb format
-                        # when the graph node and geometry have different names
+                        # 下面的映射用于处理 glb 格式中
+                        # 图节点与几何体名称不一致的情况
                         geom_name_map = {new_s.graph[node_name][1]: node_name for node_name in new_s.graph.nodes}
                         for name, geom in new_s.geometry.items():
                             if isinstance(v, Visual):
@@ -1271,20 +1271,20 @@ class URDF:
 
     def _successors(self, node):
         """
-        Get all nodes of the scene that succeeds a specified node.
+        获取场景中指定节点的所有后继节点。
 
-        Parameters
+        参数
         ------------
         node : any
-          Hashable key in `scene.graph`
+          `scene.graph` 中可哈希的键
 
-        Returns
+        返回
         -----------
         subnodes : set[str]
-          Set of nodes.
+          节点集合。
         """
-        # get every node that is a successor to specified node
-        # this includes `node`
+        # 获取指定节点的所有后继节点
+        # 其中包含 `node` 自身
         return self._scene.graph.transforms.successors(node)
 
     def _create_subrobot(self, robot_name, root_link_name):
@@ -1302,22 +1302,22 @@ class URDF:
         return subrobot
 
     def split_along_joints(self, joint_type="floating", **kwargs):
-        """Split URDF model along a particular joint type.
-        The result is a set of URDF models which together compose the original URDF.
+        """按照特定的关节类型拆分 URDF 模型。
+        结果是一组 URDF 模型，它们共同组成原始 URDF。
 
-        Args:
-            joint_type (str, or list[str], optional): Type of joint to use for splitting. Defaults to "floating".
-            **kwargs: Arguments delegated to URDF constructor of new URDF models.
+        参数:
+            joint_type (str, or list[str], optional): 用于拆分的关节类型。默认为 "floating"。
+            **kwargs: 传递给新 URDF 模型构造函数的参数。
 
-        Returns:
-            list[(np.ndarray, yourdfpy.URDF)]: A list of tuples (np.ndarray, yourdfpy.URDF) whereas each homogeneous 4x4 matrix describes the root transformation of the respective URDF model w.r.t. the original URDF.
+        返回:
+            list[(np.ndarray, yourdfpy.URDF)]: 元组 (np.ndarray, yourdfpy.URDF) 列表，其中每个 4x4 齐次矩阵描述相应 URDF 模型相对于原始 URDF 的根变换。
         """
         root_urdf = URDF(robot=copy.deepcopy(self.robot), build_scene_graph=False, load_meshes=False)
         result = []
 
         joint_types = joint_type if isinstance(joint_type, list) else [joint_type]
 
-        # find all relevant joints
+        # 找出所有相关关节
         joint_names = [j.name for j in self.robot.joints if j.type in joint_types]
         for joint_name in joint_names:
             root_link = self.link_map[self.joint_map[joint_name].child]
@@ -1333,13 +1333,13 @@ class URDF:
                 )
             )
 
-            # remove links and joints from root robot
+            # 从根机器人中移除连杆和关节
             for j in new_robot.joints:
                 root_urdf.robot.joints.remove(root_urdf.joint_map[j.name])
             for l in new_robot.links:
                 root_urdf.robot.links.remove(root_urdf.link_map[l.name])
 
-            # remove joint that connects root urdf to root_link
+            # 移除连接根 URDF 与 root_link 的关节
             if root_link.name in [j.child for j in root_urdf.robot.joints]:
                 root_urdf.robot.joints.remove(
                     root_urdf.robot.joints[[j.child for j in root_urdf.robot.joints].index(root_link.name)]
@@ -1359,28 +1359,28 @@ class URDF:
         return True
 
     def write_xml(self):
-        """Write URDF model to an XML element hierarchy.
+        """将 URDF 模型写入 XML 元素层级结构。
 
-        Returns:
-            etree.ElementTree: XML data.
+        返回:
+            etree.ElementTree: XML 数据。
         """
         xml_element = self._write_robot(self.robot)
         return etree.ElementTree(xml_element)
 
     def write_xml_string(self, **kwargs):
-        """Write URDF model to a string.
+        """将 URDF 模型写入字符串。
 
-        Returns:
-            str: String of the xml representation of the URDF model.
+        返回:
+            str: URDF 模型的 XML 表示字符串。
         """
         xml_element = self.write_xml()
         return etree.tostring(xml_element, xml_declaration=True, *kwargs)
 
     def write_xml_file(self, fname):
-        """Write URDF model to an xml file.
+        """将 URDF 模型写入 XML 文件。
 
-        Args:
-            fname (str): Filename of the file to be written. Usually ends in `.urdf`.
+        参数:
+            fname (str): 待写入文件的文件名。通常以 `.urdf` 结尾。
         """
         xml_element = self.write_xml()
         xml_element.write(fname, xml_declaration=True, pretty_print=True)
@@ -1581,7 +1581,7 @@ class URDF:
         return Mesh(filename=xml_element.get("filename"), scale=URDF._parse_scale(xml_element))
 
     def _write_mesh(self, xml_parent, mesh):
-        # TODO: turn into different filename handler
+        # TODO: 改为使用不同的文件名处理器
         xml_element = etree.SubElement(
             xml_parent,
             "mesh",
@@ -1690,14 +1690,14 @@ class URDF:
         if xml_element is None:
             return None
 
-        # TODO: use texture filename handler
+        # TODO: 使用纹理文件名处理器
         return Texture(filename=xml_element.get("filename", default=None))
 
     def _write_texture(self, xml_parent, texture):
         if texture is None:
             return
 
-        # TODO: use texture filename handler
+        # TODO: 使用纹理文件名处理器
         etree.SubElement(xml_parent, "texture", attrib={"filename": texture.filename})
 
     def _parse_material(xml_element):
@@ -2073,7 +2073,7 @@ class URDF:
             robot.materials.append(URDF._parse_material(m))
 
         if add_dummy_free_joints:
-            # Determine root link
+            # 确定根连杆
             link_names = [l.name for l in robot.links]
             for j in robot.joints:
                 link_names.remove(j.child)
@@ -2127,7 +2127,7 @@ class URDF:
             else:
                 parent_child_map[joint.parent] = [joint.child]
 
-        # Sort link with bfs order
+        # 按 BFS 顺序对连杆排序
         bfs_link_list = [self.base_link]
         to_be_handle_list = [self.base_link]
         while len(to_be_handle_list) > 0:
@@ -2143,7 +2143,7 @@ class URDF:
             joint_index = [i for i in range(len(self.robot.joints)) if self.robot.joints[i].child == link_name][0]
             bfs_joint_list.append(self.robot.joints[joint_index])
 
-        # Build tree
+        # 构建树
         root = Node(self.base_link, matrix=np.eye(4))
         for joint in bfs_joint_list:
             matrix, _ = self._forward_kinematics_joint(joint, 0)
@@ -2159,7 +2159,7 @@ class URDF:
                 if isinstance(joint, six.string_types):
                     joint_cfg.append((self._joint_map[joint], configuration[joint]))
                 elif isinstance(joint, Joint):
-                    # TODO: Joint is not hashable; so this branch will not succeed
+                    # TODO: Joint 不可哈希，因此该分支不会成功
                     joint_cfg.append((joint, configuration[joint]))
         elif isinstance(configuration, (list, tuple, np.ndarray)):
             if len(configuration) == len(self.robot.joints):
@@ -2175,7 +2175,7 @@ class URDF:
         else:
             raise TypeError("Invalid type for configuration")
 
-        # append all mimic joints in the update
+        # 在更新时追加所有 mimic 关节
         for j, q in joint_cfg + [(j, 0.0) for j in self.robot.joints if j.mimic is not None]:
             matrix, _ = self._forward_kinematics_joint(j, q=q)
             node = anytree.search.findall_by_attr(self.tree_root, j.child)[0]
@@ -2194,7 +2194,7 @@ class URDF:
 
 
 def _add_dummy_joints(robot: Robot, root_link_name: str):
-    # Prepare link and joint properties
+    # 准备连杆和关节的属性
     translation_range = (-5, 5)
     rotation_range = (-2 * np.pi, 2 * np.pi)
     joint_types = ["prismatic"] * 3 + ["revolute"] * 3

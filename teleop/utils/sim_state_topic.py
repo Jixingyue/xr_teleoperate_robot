@@ -1,8 +1,8 @@
 # Copyright (c) 2025, Unitree Robotics Co., Ltd. All Rights Reserved.
 # License: Apache License, Version 2.0  
 """
-Simple sim state subscriber class
-Subscribe to rt/sim_state_cmd topic and write to shared memory
+简易仿真状态订阅者类
+订阅 rt/sim_state_cmd topic/话题并写入 shared memory/共享内存
 """
 
 import threading
@@ -18,17 +18,17 @@ logger_mp = logging_mp.get_logger(__name__)
 
 
 class SharedMemoryManager:
-    """Shared memory manager"""
+    """shared memory/共享内存管理器"""
     
     def __init__(self, name: Optional[str] = None, size: int = 512):
-        """Initialize shared memory manager
+        """初始化 shared memory/共享内存管理器
         
         Args:
-            name: shared memory name, if None, create new one
-            size: shared memory size (bytes)
+            name: shared memory/共享内存名称，如果为 None 则创建新的共享内存
+            size: shared memory/共享内存大小（字节）
         """
         self.size = size
-        self.lock = threading.RLock()  # reentrant lock
+        self.lock = threading.RLock()  # 可重入锁
         
         if name:
             try:
@@ -45,29 +45,29 @@ class SharedMemoryManager:
             self.created = True
     
     def write_data(self, data: Dict[str, Any]) -> bool:
-        """Write data to shared memory
+        """向 shared memory/共享内存写入数据
         
         Args:
-            data: data to write
+            data: 要写入的数据
             
         Returns:
-            bool: write success or not
+            bool: 是否写入成功
         """
         try:
             with self.lock:
                 json_str = json.dumps(data)
                 json_bytes = json_str.encode('utf-8')
                 
-                if len(json_bytes) > self.size - 8:  # reserve 8 bytes for length and timestamp
+                if len(json_bytes) > self.size - 8:  # 预留 8 字节用于存放长度和时间戳
                     logger_mp.warning(f"Data too large for shared memory ({len(json_bytes)} > {self.size - 8})")
                     return False
                 
-                # write timestamp (4 bytes) and data length (4 bytes)
-                timestamp = int(time.time()) & 0xFFFFFFFF  # 32-bit timestamp, use bitmask to ensure in range
+                # 写入时间戳（4 字节）和数据长度（4 字节）
+                timestamp = int(time.time()) & 0xFFFFFFFF  # 32 位时间戳，使用位掩码确保数值在范围内
                 self.shm.buf[0:4] = timestamp.to_bytes(4, 'little')
                 self.shm.buf[4:8] = len(json_bytes).to_bytes(4, 'little')
                 
-                # write data
+                # 写入数据
                 self.shm.buf[8:8+len(json_bytes)] = json_bytes
                 return True
                 
@@ -76,24 +76,24 @@ class SharedMemoryManager:
             return False
     
     def read_data(self) -> Optional[Dict[str, Any]]:
-        """Read data from shared memory
+        """从 shared memory/共享内存读取数据
         
         Returns:
-            Dict[str, Any]: read data dictionary, return None if failed
+            Dict[str, Any]: 读取到的数据字典，失败时返回 None
         """
         try:
             with self.lock:
-                # read timestamp and data length
+                # 读取时间戳和数据长度
                 timestamp = int.from_bytes(self.shm.buf[0:4], 'little')
                 data_len = int.from_bytes(self.shm.buf[4:8], 'little')
                 
                 if data_len == 0:
                     return None
                 
-                # read data
+                # 读取数据
                 json_bytes = bytes(self.shm.buf[8:8+data_len])
                 data = json.loads(json_bytes.decode('utf-8'))
-                data['_timestamp'] = timestamp  # add timestamp information
+                data['_timestamp'] = timestamp  # 补充时间戳信息
                 return data
                 
         except Exception as e:
@@ -101,11 +101,11 @@ class SharedMemoryManager:
             return None
     
     def get_name(self) -> str:
-        """Get shared memory name"""
+        """获取 shared memory/共享内存名称"""
         return self.shm_name
     
     def cleanup(self):
-        """Clean up shared memory"""
+        """清理 shared memory/共享内存"""
         if hasattr(self, 'shm') and self.shm:
             self.shm.close()
             if self.created:
@@ -115,18 +115,18 @@ class SharedMemoryManager:
                     pass
     
     def __del__(self):
-        """Destructor"""
+        """析构函数"""
         self.cleanup()
 
 class SimStateSubscriber:
-    """Simple sim state subscriber class"""
+    """简易仿真状态订阅者类"""
     
     def __init__(self, shm_name: str = "sim_state_cmd_data", shm_size: int = 3096):
-        """Initialize the subscriber
+        """初始化订阅者
         
         Args:
-            shm_name: shared memory name
-            shm_size: shared memory size
+            shm_name: shared memory/共享内存名称
+            shm_size: shared memory/共享内存大小
         """
         self.shm_name = shm_name
         self.shm_size = shm_size
@@ -135,13 +135,13 @@ class SimStateSubscriber:
         self.subscribe_thread = None
         self.shared_memory = None
         
-        # initialize shared memory
+        # 初始化 shared memory/共享内存
         self._setup_shared_memory()
         
         logger_mp.debug(f"[SimStateSubscriber] Initialized with shared memory: {shm_name}")
     
     def _setup_shared_memory(self):
-        """Setup shared memory"""
+        """配置 shared memory/共享内存"""
         try:
             self.shared_memory = SharedMemoryManager(self.shm_name, self.shm_size)
             logger_mp.debug(f"[SimStateSubscriber] Shared memory setup successfully")
@@ -149,7 +149,7 @@ class SimStateSubscriber:
             logger_mp.error(f"[SimStateSubscriber] Failed to setup shared memory: {e}")
     
     def start_subscribe(self):
-        """Start subscribing"""
+        """开始订阅"""
         if self.running:
             logger_mp.warning(f"[SimStateSubscriber] Already running")
             return
@@ -169,7 +169,7 @@ class SimStateSubscriber:
             self.running = False
 
     def _subscribe_sim_state(self):
-        """Subscribe loop thread"""
+        """订阅循环线程"""
         logger_mp.debug(f"[SimStateSubscriber] Subscribe thread started")
         
         while self.running:
@@ -190,13 +190,13 @@ class SimStateSubscriber:
                 time.sleep(0.01)
 
     def stop_subscribe(self):
-        """Stop subscribing"""
+        """停止订阅"""
         if not self.running:
             logger_mp.warning(f"[SimStateSubscriber] Already stopped or not running")
             return
 
         self.running = False
-        # wait for thread to finish
+        # 等待线程结束
         if self.subscribe_thread:
             self.subscribe_thread.join(timeout=1.0)
 
@@ -205,10 +205,10 @@ class SimStateSubscriber:
         logger_mp.info(f"[SimStateSubscriber] Subscriber stopped")
     
     def read_data(self) -> Optional[Dict[str, Any]]:
-        """Read data from shared memory
+        """从 shared memory/共享内存读取数据
         
         Returns:
-            Dict: received data, None if no data or error
+            Dict: 接收到的数据，无数据或出错时为 None
         """
         try:
             if self.shared_memory:
@@ -219,23 +219,23 @@ class SimStateSubscriber:
             return None
     
     def is_running(self) -> bool:
-        """Check if subscriber is running"""
+        """检查订阅者是否正在运行"""
         return self.running
     
     def __del__(self):
-        """Destructor"""
+        """析构函数"""
         self.stop_subscribe()
 
 
 def start_sim_state_subscribe(shm_name: str = "sim_state_cmd_data", shm_size: int = 3096) -> SimStateSubscriber:
-    """Start sim state subscribing
+    """开始仿真状态订阅
     
     Args:
-        shm_name: shared memory name  
-        shm_size: shared memory size
+        shm_name: shared memory/共享内存名称  
+        shm_size: shared memory/共享内存大小
         
     Returns:
-        SimStateSubscriber: started subscriber instance
+        SimStateSubscriber: 已启动的订阅者实例
     """
     subscriber = SimStateSubscriber(shm_name, shm_size)
     subscriber.start_subscribe()
@@ -243,14 +243,14 @@ def start_sim_state_subscribe(shm_name: str = "sim_state_cmd_data", shm_size: in
 
 
 # if __name__ == "__main__":
-#     # example usage
+#     # 示例用法
 #     logger_mp.info("Starting sim state subscriber...")
 #     ChannelFactoryInitialize(0)
-#     # create and start subscriber
+#     # 创建并启动订阅者
 #     subscriber = start_sim_state_subscribe()
     
 #     try:
-#         # keep running and check for data
+#         # 持续运行并检查数据
 #         while True:
 #             data = subscriber.read_data()
 #             if data:

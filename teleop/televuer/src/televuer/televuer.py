@@ -11,16 +11,16 @@ from pathlib import Path
 class TeleVuer:
     def __init__(self, binocular: bool, use_hand_tracking: bool, img_shape, img_shm_name, cert_file=None, key_file=None, ngrok=False, webrtc=False):
         """
-        TeleVuer class for OpenXR-based XR teleoperate applications.
-        This class handles the communication with the Vuer server and manages the shared memory for image and pose data.
+        TeleVuer 类，用于基于 OpenXR 的 XR 遥操作应用。
+        本类负责与 Vuer 服务器通信，并管理用于图像和位姿数据的共享内存。
 
-        :param binocular: bool, whether the application is binocular (stereoscopic) or monocular.
-        :param use_hand_tracking: bool, whether to use hand tracking or controller tracking.
-        :param img_shape: tuple, shape of the image (height, width, channels).
-        :param img_shm_name: str, name of the shared memory for the image.
-        :param cert_file: str, path to the SSL certificate file.
-        :param key_file: str, path to the SSL key file.
-        :param ngrok: bool, whether to use ngrok for tunneling.
+        :param binocular: bool，应用为双目（立体视觉）还是单目。
+        :param use_hand_tracking: bool，使用手部追踪还是手柄追踪。
+        :param img_shape: tuple，图像形状（高度、宽度、通道数）。
+        :param img_shm_name: str，图像共享内存的名称。
+        :param cert_file: str，SSL 证书文件路径。
+        :param key_file: str，SSL 密钥文件路径。
+        :param ngrok: bool，是否使用 ngrok 进行内网穿透。
         """
         self.binocular = binocular
         self.use_hand_tracking = use_hand_tracking
@@ -120,22 +120,22 @@ class TeleVuer:
             right_controller_state = event.value["rightState"]
 
             def extract_controller_states(state_dict, prefix):
-                # trigger
+                # 扳机
                 with getattr(self, f"{prefix}_trigger_state_shared").get_lock():
                     getattr(self, f"{prefix}_trigger_state_shared").value = bool(state_dict.get("trigger", False))
                 with getattr(self, f"{prefix}_trigger_value_shared").get_lock():
                     getattr(self, f"{prefix}_trigger_value_shared").value = float(state_dict.get("triggerValue", 0.0))
-                # squeeze
+                # 握紧
                 with getattr(self, f"{prefix}_squeeze_state_shared").get_lock():
                     getattr(self, f"{prefix}_squeeze_state_shared").value = bool(state_dict.get("squeeze", False))
                 with getattr(self, f"{prefix}_squeeze_value_shared").get_lock():
                     getattr(self, f"{prefix}_squeeze_value_shared").value = float(state_dict.get("squeezeValue", 0.0))
-                # thumbstick
+                # 摇杆
                 with getattr(self, f"{prefix}_thumbstick_state_shared").get_lock():
                     getattr(self, f"{prefix}_thumbstick_state_shared").value = bool(state_dict.get("thumbstick", False))
                 with getattr(self, f"{prefix}_thumbstick_value_shared").get_lock():
                     getattr(self, f"{prefix}_thumbstick_value_shared")[:] = state_dict.get("thumbstickValue", [0.0, 0.0])
-                # buttons
+                # 按键
                 with getattr(self, f"{prefix}_aButton_shared").get_lock():
                     getattr(self, f"{prefix}_aButton_shared").value = bool(state_dict.get("aButton", False))
                 with getattr(self, f"{prefix}_bButton_shared").get_lock():
@@ -172,12 +172,12 @@ class TeleVuer:
                         ]
 
             def extract_hand_states(state_dict, prefix):
-                # pinch
+                # 捏合
                 with getattr(self, f"{prefix}_pinch_state_shared").get_lock():
                     getattr(self, f"{prefix}_pinch_state_shared").value = bool(state_dict.get("pinch", False))
                 with getattr(self, f"{prefix}_pinch_value_shared").get_lock():
                     getattr(self, f"{prefix}_pinch_value_shared").value = float(state_dict.get("pinchValue", 0.0))
-                # squeeze
+                # 握紧
                 with getattr(self, f"{prefix}_squeeze_state_shared").get_lock():
                     getattr(self, f"{prefix}_squeeze_state_shared").value = bool(state_dict.get("squeeze", False))
                 with getattr(self, f"{prefix}_squeeze_value_shared").get_lock():
@@ -223,9 +223,9 @@ class TeleVuer:
                         aspect=1.778,
                         height=1,
                         distanceToCamera=1,
-                        # The underlying rendering engine supported a layer binary bitmask for both objects and the camera. 
-                        # Below we set the two image planes, left and right, to layers=1 and layers=2. 
-                        # Note that these two masks are associated with left eye’s camera and the right eye’s camera.
+                        # 底层渲染引擎为物体和相机都支持图层二进制位掩码（layer binary bitmask）。
+                        # 下面我们将左右两个图像平面分别设置为 layers=1 和 layers=2。
+                        # 注意，这两个掩码分别关联左眼相机和右眼相机。
                         layers=1,
                         format="jpeg",
                         quality=100,
@@ -246,7 +246,7 @@ class TeleVuer:
                 ],
                 to="bgChildren",
             )
-            # 'jpeg' encoding should give you about 30fps with a 16ms wait in-between.
+            # 采用 'jpeg' 编码，配合两次发送之间 16ms 的等待，帧率约为 30fps。
             await asyncio.sleep(0.016 * 2)
 
     async def main_image_monocular(self, session, fps=60):
@@ -325,191 +325,191 @@ class TeleVuer:
         )
         while True:
             await asyncio.sleep(1)
-    # ==================== common data ====================
+    # ==================== 通用数据 ====================
     @property
     def head_pose(self):
-        """np.ndarray, shape (4, 4), head SE(3) pose matrix from Vuer (basis OpenXR Convention)."""
+        """np.ndarray，shape (4, 4)，来自 Vuer 的头部 SE(3) 位姿矩阵（基：OpenXR 约定）。"""
         with self.head_pose_shared.get_lock():
             return np.array(self.head_pose_shared[:]).reshape(4, 4, order="F")
 
     @property
     def left_arm_pose(self):
-        """np.ndarray, shape (4, 4), left arm SE(3) pose matrix from Vuer (basis OpenXR Convention)."""
+        """np.ndarray，shape (4, 4)，来自 Vuer 的左臂 SE(3) 位姿矩阵（基：OpenXR 约定）。"""
         with self.left_arm_pose_shared.get_lock():
             return np.array(self.left_arm_pose_shared[:]).reshape(4, 4, order="F")
 
     @property
     def right_arm_pose(self):
-        """np.ndarray, shape (4, 4), right arm SE(3) pose matrix from Vuer (basis OpenXR Convention)."""
+        """np.ndarray，shape (4, 4)，来自 Vuer 的右臂 SE(3) 位姿矩阵（基：OpenXR 约定）。"""
         with self.right_arm_pose_shared.get_lock():
             return np.array(self.right_arm_pose_shared[:]).reshape(4, 4, order="F")
 
-    # ==================== Hand Tracking Data ====================
+    # ==================== 手部追踪数据 ====================
     @property
     def left_hand_positions(self):
-        """np.ndarray, shape (25, 3), left hand 25 landmarks' 3D positions."""
+        """np.ndarray，shape (25, 3)，左手 25 个关键点的三维位置。"""
         with self.left_hand_position_shared.get_lock():
             return np.array(self.left_hand_position_shared[:]).reshape(25, 3)
 
     @property
     def right_hand_positions(self):
-        """np.ndarray, shape (25, 3), right hand 25 landmarks' 3D positions."""
+        """np.ndarray，shape (25, 3)，右手 25 个关键点的三维位置。"""
         with self.right_hand_position_shared.get_lock():
             return np.array(self.right_hand_position_shared[:]).reshape(25, 3)
 
     @property
     def left_hand_orientations(self):
-        """np.ndarray, shape (25, 3, 3), left hand 25 landmarks' orientations (flattened 3x3 matrices, column-major)."""
+        """np.ndarray，shape (25, 3, 3)，左手 25 个关键点的朝向（展平的 3x3 矩阵，列优先）。"""
         with self.left_hand_orientation_shared.get_lock():
             return np.array(self.left_hand_orientation_shared[:]).reshape(25, 9).reshape(25, 3, 3, order="F")
 
     @property
     def right_hand_orientations(self):
-        """np.ndarray, shape (25, 3, 3), right hand 25 landmarks' orientations (flattened 3x3 matrices, column-major)."""
+        """np.ndarray，shape (25, 3, 3)，右手 25 个关键点的朝向（展平的 3x3 矩阵，列优先）。"""
         with self.right_hand_orientation_shared.get_lock():
             return np.array(self.right_hand_orientation_shared[:]).reshape(25, 9).reshape(25, 3, 3, order="F")
 
     @property
     def left_hand_pinch_state(self):
-        """bool, whether left hand is pinching."""
+        """bool，左手是否处于捏合状态。"""
         with self.left_pinch_state_shared.get_lock():
             return self.left_pinch_state_shared.value
 
     @property
     def left_hand_pinch_value(self):
-        """float, pinch strength of left hand."""
+        """float，左手的捏合力度。"""
         with self.left_pinch_value_shared.get_lock():
             return self.left_pinch_value_shared.value
 
     @property
     def left_hand_squeeze_state(self):
-        """bool, whether left hand is squeezing."""
+        """bool，左手是否处于握紧状态。"""
         with self.left_squeeze_state_shared.get_lock():
             return self.left_squeeze_state_shared.value
 
     @property
     def left_hand_squeeze_value(self):
-        """float, squeeze strength of left hand."""
+        """float，左手的握紧力度。"""
         with self.left_squeeze_value_shared.get_lock():
             return self.left_squeeze_value_shared.value
 
     @property
     def right_hand_pinch_state(self):
-        """bool, whether right hand is pinching."""
+        """bool，右手是否处于捏合状态。"""
         with self.right_pinch_state_shared.get_lock():
             return self.right_pinch_state_shared.value
 
     @property
     def right_hand_pinch_value(self):
-        """float, pinch strength of right hand."""
+        """float，右手的捏合力度。"""
         with self.right_pinch_value_shared.get_lock():
             return self.right_pinch_value_shared.value
 
     @property
     def right_hand_squeeze_state(self):
-        """bool, whether right hand is squeezing."""
+        """bool，右手是否处于握紧状态。"""
         with self.right_squeeze_state_shared.get_lock():
             return self.right_squeeze_state_shared.value
 
     @property
     def right_hand_squeeze_value(self):
-        """float, squeeze strength of right hand."""
+        """float，右手的握紧力度。"""
         with self.right_squeeze_value_shared.get_lock():
             return self.right_squeeze_value_shared.value
 
-    # ==================== Controller Data ====================
+    # ==================== 手柄数据 ====================
     @property
     def left_controller_trigger_state(self):
-        """bool, left controller trigger pressed or not."""
+        """bool，左手柄扳机是否按下。"""
         with self.left_trigger_state_shared.get_lock():
             return self.left_trigger_state_shared.value
 
     @property
     def left_controller_trigger_value(self):
-        """float, left controller trigger analog value (0.0 ~ 1.0)."""
+        """float，左手柄扳机的模拟量数值（0.0 ~ 1.0）。"""
         with self.left_trigger_value_shared.get_lock():
             return self.left_trigger_value_shared.value
 
     @property
     def left_controller_squeeze_state(self):
-        """bool, left controller squeeze pressed or not."""
+        """bool，左手柄握紧键是否按下。"""
         with self.left_squeeze_state_shared.get_lock():
             return self.left_squeeze_state_shared.value
 
     @property
     def left_controller_squeeze_value(self):
-        """float, left controller squeeze analog value (0.0 ~ 1.0)."""
+        """float，左手柄握紧的模拟量数值（0.0 ~ 1.0）。"""
         with self.left_squeeze_value_shared.get_lock():
             return self.left_squeeze_value_shared.value
 
     @property
     def left_controller_thumbstick_state(self):
-        """bool, whether left thumbstick is touched or clicked."""
+        """bool，左摇杆是否被触摸或按下。"""
         with self.left_thumbstick_state_shared.get_lock():
             return self.left_thumbstick_state_shared.value
 
     @property
     def left_controller_thumbstick_value(self):
-        """np.ndarray, shape (2,), left thumbstick 2D axis values (x, y)."""
+        """np.ndarray，shape (2,)，左摇杆的二维轴数值（x, y）。"""
         with self.left_thumbstick_value_shared.get_lock():
             return np.array(self.left_thumbstick_value_shared[:])
 
     @property
     def left_controller_aButton(self):
-        """bool, left controller 'A' button pressed."""
+        """bool，左手柄的 A 键是否按下。"""
         with self.left_aButton_shared.get_lock():
             return self.left_aButton_shared.value
 
     @property
     def left_controller_bButton(self):
-        """bool, left controller 'B' button pressed."""
+        """bool，左手柄的 B 键是否按下。"""
         with self.left_bButton_shared.get_lock():
             return self.left_bButton_shared.value
 
     @property
     def right_controller_trigger_state(self):
-        """bool, right controller trigger pressed or not."""
+        """bool，右手柄扳机是否按下。"""
         with self.right_trigger_state_shared.get_lock():
             return self.right_trigger_state_shared.value
 
     @property
     def right_controller_trigger_value(self):
-        """float, right controller trigger analog value (0.0 ~ 1.0)."""
+        """float，右手柄扳机的模拟量数值（0.0 ~ 1.0）。"""
         with self.right_trigger_value_shared.get_lock():
             return self.right_trigger_value_shared.value
 
     @property
     def right_controller_squeeze_state(self):
-        """bool, right controller squeeze pressed or not."""
+        """bool，右手柄握紧键是否按下。"""
         with self.right_squeeze_state_shared.get_lock():
             return self.right_squeeze_state_shared.value
 
     @property
     def right_controller_squeeze_value(self):
-        """float, right controller squeeze analog value (0.0 ~ 1.0)."""
+        """float，右手柄握紧的模拟量数值（0.0 ~ 1.0）。"""
         with self.right_squeeze_value_shared.get_lock():
             return self.right_squeeze_value_shared.value
 
     @property
     def right_controller_thumbstick_state(self):
-        """bool, whether right thumbstick is touched or clicked."""
+        """bool，右摇杆是否被触摸或按下。"""
         with self.right_thumbstick_state_shared.get_lock():
             return self.right_thumbstick_state_shared.value
 
     @property
     def right_controller_thumbstick_value(self):
-        """np.ndarray, shape (2,), right thumbstick 2D axis values (x, y)."""
+        """np.ndarray，shape (2,)，右摇杆的二维轴数值（x, y）。"""
         with self.right_thumbstick_value_shared.get_lock():
             return np.array(self.right_thumbstick_value_shared[:])
 
     @property
     def right_controller_aButton(self):
-        """bool, right controller 'A' button pressed."""
+        """bool，右手柄的 A 键是否按下。"""
         with self.right_aButton_shared.get_lock():
             return self.right_aButton_shared.value
 
     @property
     def right_controller_bButton(self):
-        """bool, right controller 'B' button pressed."""
+        """bool，右手柄的 B 键是否按下。"""
         with self.right_bButton_shared.get_lock():
             return self.right_bButton_shared.value

@@ -57,9 +57,9 @@ if __name__ == '__main__':
     
     # 基本控制参数
     parser.add_argument('--xr-mode', type=str, choices=['hand', 'controller'], default='controller', help='选择XR设备追踪源')
-    parser.add_argument('--arm', type=str, choices=['UR3E', 'FRANKA_PANDA', 'AUBO_I5'], default='AUBO_I5', help='Select arm controller')
-    parser.add_argument('--ee', type=str, choices=['inspire'], default='inspire', help='Select end effector controller')
-    parser.add_argument('--motion', action = 'store_true', help = 'Enable motion control mode')
+    parser.add_argument('--arm', type=str, choices=['UR3E', 'FRANKA_PANDA', 'AUBO_I5'], default='AUBO_I5', help='选择机械臂控制器')
+    parser.add_argument('--ee', type=str, choices=['inspire'], default='inspire', help='选择末端执行器控制器')
+    parser.add_argument('--motion', action = 'store_true', help = '启用运动控制模式')
     # 模式标志
     parser.add_argument('--record', action='store_true', help='启用数据记录')
     parser.add_argument('--headless', action='store_true', help='启用无头模式（无显示）')
@@ -132,13 +132,13 @@ if __name__ == '__main__':
     else:
         raise ValueError(f"Unsupported arm type: {args.arm}")
     arm_ik = ArmIK(robot_type=args.arm)
-    # end-effector
+    # 末端执行器
     if args.ee == "inspire":
-        left_hand_pos_array = Array('d', 75, lock = True)      # [input]
-        right_hand_pos_array = Array('d', 75, lock = True)     # [input]
+        left_hand_pos_array = Array('d', 75, lock = True)      # [输入]
+        right_hand_pos_array = Array('d', 75, lock = True)     # [输入]
         dual_hand_data_lock = Lock()
-        dual_hand_state_array = Array('d', 12, lock = False)   # [output] current left, right hand state(12) data.
-        dual_hand_action_array = Array('d', 12, lock = False)  # [output] current left, right hand action(12) data.
+        dual_hand_state_array = Array('d', 12, lock = False)   # [输出] 当前左、右手状态（12）数据。
+        dual_hand_action_array = Array('d', 12, lock = False)  # [输出] 当前左、右手动作（12）数据。
         hand_ctrl = Inspire_Controller(left_hand_pos_array, right_hand_pos_array, dual_hand_data_lock, dual_hand_state_array, dual_hand_action_array)
     else:
         print("无夹爪/灵巧手控制")

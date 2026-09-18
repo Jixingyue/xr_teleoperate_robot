@@ -57,9 +57,9 @@ if __name__ == '__main__':
     
     # 基本控制参数
     parser.add_argument('--xr-mode', type=str, choices=['hand', 'controller'], default='controller', help='选择XR设备追踪源')
-    parser.add_argument('--arm', type=str, choices=['UR3E', 'FRANKA_PANDA',"AUBOI5"], default='AUBOI5', help='Select arm controller')
-    parser.add_argument('--ee', type=str, choices=['inspire',"inspire_gripper"], default='inspire_gripper', help='Select end effector controller')
-    parser.add_argument('--motion', action = 'store_true', help = 'Enable motion control mode')
+    parser.add_argument('--arm', type=str, choices=['UR3E', 'FRANKA_PANDA',"AUBOI5"], default='AUBOI5', help='选择机械臂控制器')
+    parser.add_argument('--ee', type=str, choices=['inspire',"inspire_gripper"], default='inspire_gripper', help='选择末端执行器控制器')
+    parser.add_argument('--motion', action = 'store_true', help = '启用运动控制模式')
     # 模式标志
     parser.add_argument('--record', action='store_true', help='启用数据记录')
     parser.add_argument('--headless', action='store_true', help='启用无头模式（无显示）')
@@ -132,20 +132,20 @@ if __name__ == '__main__':
     else:
         raise ValueError(f"Unsupported arm type: {args.arm}")
     arm_ik = ArmIK(robot_type=args.arm)
-    # end-effector
+    # 末端执行器
     if args.ee == "inspire":
-        left_gripper_value = Value('d', 1.0, lock = True)      # [input]
-        right_gripper_value = Value('d', 1.0, lock = True)     # [input]
+        left_gripper_value = Value('d', 1.0, lock = True)      # [输入]
+        right_gripper_value = Value('d', 1.0, lock = True)     # [输入]
         dual_gripper_data_lock = Lock()
-        dual_gripper_state_array = Array('d', 2, lock = False)   # [output] current left, right gripper state data.
-        dual_gripper_action_array = Array('d', 2, lock = False)  # [output] current left, right gripper action data.
+        dual_gripper_state_array = Array('d', 2, lock = False)   # [输出] 当前左、右夹爪状态数据。
+        dual_gripper_action_array = Array('d', 2, lock = False)  # [输出] 当前左、右夹爪动作数据。
         gripper_ctrl = Inspire_Controller(None, right_gripper_value, dual_gripper_data_lock, dual_gripper_state_array, dual_gripper_action_array)
     elif args.ee == "inspire_gripper":
-        left_gripper_value = Value('d', 1.0, lock = True)      # [input]
-        right_gripper_value = Value('d', 1.0, lock = True)     # [input]
+        left_gripper_value = Value('d', 1.0, lock = True)      # [输入]
+        right_gripper_value = Value('d', 1.0, lock = True)     # [输入]
         dual_gripper_data_lock = Lock()
-        dual_gripper_state_array = Array('d', 2, lock = False)   # [output] current left, right gripper state data.
-        dual_gripper_action_array = Array('d', 2, lock = False)  # [output] current left, right gripper action data.
+        dual_gripper_state_array = Array('d', 2, lock = False)   # [输出] 当前左、右夹爪状态数据。
+        dual_gripper_action_array = Array('d', 2, lock = False)  # [输出] 当前左、右夹爪动作数据。
         gripper_ctrl = Inspire_Gripper_Controller(None, right_gripper_value, dual_gripper_data_lock, dual_gripper_state_array, dual_gripper_action_array)
     else:
         pass

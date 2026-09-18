@@ -26,7 +26,7 @@ class WeightedMovingFilter:
         assert len(new_data) == self._data_size
 
         if len(self._data_queue) > 0 and np.array_equal(new_data, self._data_queue[-1]):
-            return  # skip duplicate data
+            return  # 跳过重复数据
         
         if len(self._data_queue) >= self._window_size:
             self._data_queue.pop(0)
@@ -42,7 +42,7 @@ class WeightedMovingFilter:
 def visualize_filter_comparison(filter_params, steps):
     import time
     t = np.linspace(0, 4 * np.pi, steps)
-    original_data = np.array([np.sin(t + i) + np.random.normal(0, 0.2, len(t)) for i in range(35)]).T  # sin wave with noise, shape is [len(t), 35]
+    original_data = np.array([np.sin(t + i) + np.random.normal(0, 0.2, len(t)) for i in range(35)]).T  # 带噪声的正弦波，形状为 [len(t), 35]
 
     plt.figure(figsize=(14, 10))
     
@@ -54,7 +54,7 @@ def visualize_filter_comparison(filter_params, steps):
         time1 = time.time()
 
         for i in range(steps):
-            filter.add_data(data_2b_filtered[i][13:27])            # step i, columns 13 to 26 (total:14)
+            filter.add_data(data_2b_filtered[i][13:27])            # 第 i 步，第 13 到 26 列（共 14 列）
             data_2b_filtered[i][13:27] = filter.filtered_data
             filtered_data.append(data_2b_filtered[i])
 
@@ -63,7 +63,7 @@ def visualize_filter_comparison(filter_params, steps):
 
         filtered_data = np.array(filtered_data)
 
-        # col0 should not 2b filtered
+        # 第 0 列不应被滤波
         plt.subplot(len(filter_params), 2, idx * 2 + 1)
         plt.plot(filtered_data[:, 0], label=f'Filtered (Window {filter._window_size})')
         plt.plot(original_data[:, 0], 'r--', label='Original', alpha=0.5)
@@ -72,7 +72,7 @@ def visualize_filter_comparison(filter_params, steps):
         plt.ylabel('Value')
         plt.legend()
 
-        # col13 should 2b filtered
+        # 第 13 列应被滤波
         plt.subplot(len(filter_params), 2, idx * 2 + 2)
         plt.plot(filtered_data[:, 13], label=f'Filtered (Window {filter._window_size})')
         plt.plot(original_data[:, 13], 'r--', label='Original', alpha=0.5)
@@ -86,7 +86,7 @@ def visualize_filter_comparison(filter_params, steps):
 
 
 if __name__ == "__main__":
-    # windows_size and weights
+    # 窗口大小与权重
     filter_params = [ 
         (np.array([0.7, 0.2, 0.1])),
         (np.array([0.5, 0.3, 0.2])),

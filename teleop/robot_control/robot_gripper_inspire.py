@@ -87,7 +87,7 @@ class SerialGripper:
         data_length = id_and_length[1]
         
         # 读取剩余数据（指令号 + 数据内容 + 校验和）
-        remaining_data = self.serial.read(data_length + 1)  # +1 for checksum
+        remaining_data = self.serial.read(data_length + 1)  # +1 为校验和
         if len(remaining_data) < data_length + 1:
             print("⚠️ 数据接收不完整")
             return self.get_state()
@@ -189,7 +189,7 @@ class Inspire_Gripper_Controller:
         self.left_gripper_state_value  = Value('d',1.0,lock=True)
         self.right_gripper_state_value = Value('d',1.0,lock=True)
 
-        # initialize subscribe thread
+        # 初始化订阅线程
         self.subscribe_state_thread = threading.Thread(target=self._subscribe_gripper_state)
         self.subscribe_state_thread.daemon = True
         self.subscribe_state_thread.start()

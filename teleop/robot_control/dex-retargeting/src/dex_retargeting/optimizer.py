@@ -32,16 +32,16 @@ class Optimizer:
 
         self.idx_pin2fixed = np.array([i for i in range(robot.dof) if i not in idx_pin2target], dtype=int)
         self.opt = nlopt.opt(nlopt.LD_SLSQP, len(idx_pin2target))
-        self.opt_dof = len(idx_pin2target)  # This dof includes the mimic joints
+        self.opt_dof = len(idx_pin2target)  # 该自由度包含 mimic 关节
 
-        # Target
+        # 目标
         self.target_link_human_indices = target_link_human_indices
 
-        # Free joint
+        # 自由关节
         link_names = robot.link_names
         self.has_free_joint = len([name for name in link_names if "dummy" in name]) >= 6
 
-        # Kinematics adaptor
+        # 运动学适配器
         self.adaptor: Optional[KinematicAdaptor] = None
 
     def set_joint_limit(self, joint_limits: np.ndarray, epsilon=1e-3):
@@ -56,7 +56,7 @@ class Optimizer:
     def set_kinematic_adaptor(self, adaptor: KinematicAdaptor):
         self.adaptor = adaptor
 
-        # Remove mimic joints from fixed joint list
+        # 将 mimic 关节从固定关节列表中移除
         if isinstance(adaptor, MimicJointKinematicAdaptor):
             fixed_idx = self.idx_pin2fixed
             mimic_idx = adaptor.idx_pin2mimic
@@ -65,13 +65,13 @@ class Optimizer:
 
     def retarget(self, ref_value, fixed_qpos, last_qpos):
         """
-        Compute the retargeting results using non-linear optimization
+        使用非线性优化计算重定向结果
         Args:
-            ref_value: the reference value in cartesian space as input, different optimizer has different reference
-            fixed_qpos: the fixed value (not optimized) in retargeting, consistent with self.fixed_joint_names
-            last_qpos: the last retargeting results or initial value, consistent with function return
+            ref_value: 笛卡尔空间中的参考值作为输入，不同的优化器有不同的参考量
+            fixed_qpos: 重定向中固定（不参与优化）的值，与 self.fixed_joint_names 一致
+            last_qpos: 上一次重定向结果或初始值，与函数返回值一致
 
-        Returns: joint position of robot, the joint order and dim is consistent with self.target_joint_names
+        Returns: 机器人的关节位置，其关节顺序和维度与 self.target_joint_names 一致
 
         """
         if len(fixed_qpos) != len(self.idx_pin2fixed):
@@ -115,7 +115,7 @@ class PositionOptimizer(Optimizer):
         self.huber_loss = torch.nn.SmoothL1Loss(beta=huber_delta)
         self.norm_delta = norm_delta
 
-        # Sanity check and cache link indices
+        # 合理性检查并缓存连杆索引
         self.target_link_indices = self.get_link_indices(target_link_names)
 
         self.opt.set_ftol_abs(1e-5)
@@ -129,7 +129,7 @@ class PositionOptimizer(Optimizer):
         def objective(x: np.ndarray, grad: np.ndarray) -> float:
             qpos[self.idx_pin2target] = x
 
-            # Kinematics forwarding for qpos
+            # 对 qpos 进行运动学前向传递
             if self.adaptor is not None:
                 qpos[:] = self.adaptor.forward_qpos(qpos)[:]
 
@@ -137,11 +137,11 @@ class PositionOptimizer(Optimizer):
             target_link_poses = [self.robot.get_link_pose(index) for index in self.target_link_indices]
             body_pos = np.stack([pose[:3, 3] for pose in target_link_poses], axis=0)  # (n ,3)
 
-            # Torch computation for accurate loss and grad
+            # 使用 Torch 计算以获得精确的损失和梯度
             torch_body_pos = torch.as_tensor(body_pos)
             torch_body_pos.requires_grad_()
 
-            # Loss term for kinematics retargeting based on 3D position error
+            # 基于 3D 位置误差的运动学重定向损失项
             huber_distance = self.huber_loss(torch_body_pos, torch_target_pos)
             result = huber_distance.cpu().detach().item()
 
@@ -154,18 +154,18 @@ class PositionOptimizer(Optimizer):
                     link_kinematics_jacobian = link_rot @ link_body_jacobian
                     jacobians.append(link_kinematics_jacobian)
 
-                # Note: the joint order in this jacobian is consistent pinocchio
+                # 注意：该雅可比矩阵中的关节顺序与 pinocchio 一致
                 jacobians = np.stack(jacobians, axis=0)
                 huber_distance.backward()
                 grad_pos = torch_body_pos.grad.cpu().numpy()[:, None, :]
 
-                # Convert the jacobian from pinocchio order to target order
+                # 将雅可比矩阵从 pinocchio 顺序转换为目标顺序
                 if self.adaptor is not None:
                     jacobians = self.adaptor.backward_jacobian(jacobians)
                 else:
                     jacobians = jacobians[..., self.idx_pin2target]
 
-                # Compute the gradient to the qpos
+                # 计算对 qpos 的梯度
                 grad_qpos = np.matmul(grad_pos, jacobians)
                 grad_qpos = grad_qpos.mean(1).sum(0)
                 grad_qpos += 2 * self.norm_delta * (x - last_qpos)
@@ -198,15 +198,15 @@ class VectorOptimizer(Optimizer):
         self.norm_delta = norm_delta
         self.scaling = scaling
 
-        # Computation cache for better performance
-        # For one link used in multiple vectors, e.g. hand palm, we do not want to compute it multiple times
+        # 计算缓存以提升性能
+        # 对于被多个向量使用的同一连杆（例如手掌），不希望重复计算多次
         self.computed_link_names = list(set(target_origin_link_names).union(set(target_task_link_names)))
         self.origin_link_indices = torch.tensor(
             [self.computed_link_names.index(name) for name in target_origin_link_names]
         )
         self.task_link_indices = torch.tensor([self.computed_link_names.index(name) for name in target_task_link_names])
 
-        # Cache link indices that will involve in kinematics computation
+        # 缓存将参与运动学计算的连杆索引
         self.computed_link_indices = self.get_link_indices(self.computed_link_names)
 
         self.opt.set_ftol_abs(1e-6)
@@ -220,7 +220,7 @@ class VectorOptimizer(Optimizer):
         def objective(x: np.ndarray, grad: np.ndarray) -> float:
             qpos[self.idx_pin2target] = x
 
-            # Kinematics forwarding for qpos
+            # 对 qpos 进行运动学前向传递
             if self.adaptor is not None:
                 qpos[:] = self.adaptor.forward_qpos(qpos)[:]
 
@@ -228,16 +228,16 @@ class VectorOptimizer(Optimizer):
             target_link_poses = [self.robot.get_link_pose(index) for index in self.computed_link_indices]
             body_pos = np.array([pose[:3, 3] for pose in target_link_poses])
 
-            # Torch computation for accurate loss and grad
+            # 使用 Torch 计算以获得精确的损失和梯度
             torch_body_pos = torch.as_tensor(body_pos)
             torch_body_pos.requires_grad_()
 
-            # Index link for computation
+            # 为计算建立连杆索引
             origin_link_pos = torch_body_pos[self.origin_link_indices, :]
             task_link_pos = torch_body_pos[self.task_link_indices, :]
             robot_vec = task_link_pos - origin_link_pos
 
-            # Loss term for kinematics retargeting based on 3D position error
+            # 基于 3D 位置误差的运动学重定向损失项
             vec_dist = torch.norm(robot_vec - torch_target_vec, dim=1, keepdim=False)
             huber_distance = self.huber_loss(vec_dist, torch.zeros_like(vec_dist))
             result = huber_distance.cpu().detach().item()
@@ -251,12 +251,12 @@ class VectorOptimizer(Optimizer):
                     link_kinematics_jacobian = link_rot @ link_body_jacobian
                     jacobians.append(link_kinematics_jacobian)
 
-                # Note: the joint order in this jacobian is consistent pinocchio
+                # 注意：该雅可比矩阵中的关节顺序与 pinocchio 一致
                 jacobians = np.stack(jacobians, axis=0)
                 huber_distance.backward()
                 grad_pos = torch_body_pos.grad.cpu().numpy()[:, None, :]
 
-                # Convert the jacobian from pinocchio order to target order
+                # 将雅可比矩阵从 pinocchio 顺序转换为目标顺序
                 if self.adaptor is not None:
                     jacobians = self.adaptor.backward_jacobian(jacobians)
                 else:
@@ -274,13 +274,13 @@ class VectorOptimizer(Optimizer):
 
 
 class DexPilotOptimizer(Optimizer):
-    """Retargeting optimizer using the method proposed in DexPilot
+    """使用 DexPilot 中提出方法的重定向优化器
 
-    This is a broader adaptation of the original optimizer delineated in the DexPilot paper.
-    While the initial DexPilot study focused solely on the four-fingered Allegro Hand, this version of the optimizer
-    embraces the same principles for both four-fingered and five-fingered hands. It projects the distance between the
-    thumb and the other fingers to facilitate more stable grasping.
-    Reference: https://arxiv.org/abs/1910.03135
+    这是对 DexPilot 论文中所述原始优化器的更广泛适配。
+    最初的 DexPilot 研究仅关注四指的 Allegro Hand，而本版本的优化器
+    对四指手和五指手采用相同的原理。它对拇指与其他手指之间的距离进行投影，
+    以实现更稳定的抓取。
+    参考文献: https://arxiv.org/abs/1910.03135
 
     Args:
         robot:
@@ -306,7 +306,7 @@ class DexPilotOptimizer(Optimizer):
         target_link_human_indices: Optional[np.ndarray] = None,
         huber_delta=0.03,
         norm_delta=4e-3,
-        # DexPilot parameters
+        # DexPilot 参数
         # gamma=2.5e-3,
         project_dist=0.03,
         escape_dist=0.05,
@@ -341,26 +341,26 @@ class DexPilotOptimizer(Optimizer):
         self.huber_loss = torch.nn.SmoothL1Loss(beta=huber_delta, reduction="none")
         self.norm_delta = norm_delta
 
-        # DexPilot parameters
+        # DexPilot 参数
         self.project_dist = project_dist
         self.escape_dist = escape_dist
         self.eta1 = eta1
         self.eta2 = eta2
 
-        # Computation cache for better performance
-        # For one link used in multiple vectors, e.g. hand palm, we do not want to compute it multiple times
+        # 计算缓存以提升性能
+        # 对于被多个向量使用的同一连杆（例如手掌），不希望重复计算多次
         self.computed_link_names = list(set(target_origin_link_names).union(set(target_task_link_names)))
         self.origin_link_indices = torch.tensor(
             [self.computed_link_names.index(name) for name in target_origin_link_names]
         )
         self.task_link_indices = torch.tensor([self.computed_link_names.index(name) for name in target_task_link_names])
 
-        # Sanity check and cache link indices
+        # 合理性检查并缓存连杆索引
         self.computed_link_indices = self.get_link_indices(self.computed_link_names)
 
         self.opt.set_ftol_abs(1e-6)
 
-        # DexPilot cache
+        # DexPilot 缓存
         self.projected, self.s2_project_index_origin, self.s2_project_index_task, self.projected_dist = (
             self.set_dexpilot_cache(self.num_fingers, eta1, eta2)
         )
@@ -368,20 +368,20 @@ class DexPilotOptimizer(Optimizer):
     @staticmethod
     def generate_link_indices(num_fingers):
         """
-        Example:
+        示例:
         >>> generate_link_indices(4)
         ([2, 3, 4, 3, 4, 4, 0, 0, 0, 0], [1, 1, 1, 2, 2, 3, 1, 2, 3, 4])
         """
         origin_link_index = []
         task_link_index = []
 
-        # S1：Add indices for connections between fingers
+        # S1：添加手指之间连接的索引
         for i in range(1, num_fingers):
             for j in range(i + 1, num_fingers + 1):
                 origin_link_index.append(j)
                 task_link_index.append(i)
 
-        # S2：Add indices for connections to the base (0)
+        # S2：添加与基座 (0) 连接的索引
         for i in range(1, num_fingers + 1):
             origin_link_index.append(0)
             task_link_index.append(i)
@@ -391,7 +391,7 @@ class DexPilotOptimizer(Optimizer):
     @staticmethod
     def set_dexpilot_cache(num_fingers, eta1, eta2):
         """
-        Example:
+        示例:
         >>> set_dexpilot_cache(4, 0.1, 0.2)
         (array([False, False, False, False, False, False]),
         [1, 2, 2],
@@ -419,7 +419,7 @@ class DexPilotOptimizer(Optimizer):
         len_s2 = len(self.s2_project_index_task)
         len_s1 = len_proj - len_s2
 
-        # Update projection indicator
+        # 更新投影指示符
         target_vec_dist = np.linalg.norm(target_vector[:len_proj], axis=1)
         self.projected[:len_s1][target_vec_dist[0:len_s1] < self.project_dist] = True
         self.projected[:len_s1][target_vec_dist[0:len_s1] > self.escape_dist] = False
@@ -430,23 +430,23 @@ class DexPilotOptimizer(Optimizer):
             self.projected[len_s1:len_proj], target_vec_dist[len_s1:len_proj] <= 0.03
         )
 
-        # Update weight vector
+        # 更新权重向量
         normal_weight = np.ones(len_proj, dtype=np.float32) * 1
         high_weight = np.array([200] * len_s1 + [400] * len_s2, dtype=np.float32)
         weight = np.where(self.projected, high_weight, normal_weight)
 
-        # We change the weight to 10 instead of 1 here, for vector originate from wrist to fingertips
-        # This ensures better intuitive mapping due wrong pose detection
+        # 对于从手腕指向指尖的向量，我们将权重从 1 改为 10
+        # 这样可以在姿态检测有误时保证更符合直觉的映射
         weight = torch.from_numpy(
             np.concatenate([weight, np.ones(self.num_fingers, dtype=np.float32) * len_proj + self.num_fingers])
         )
 
-        # Compute reference distance vector
+        # 计算参考距离向量
         normal_vec = target_vector * self.scaling  # (10, 3)
         dir_vec = target_vector[:len_proj] / (target_vec_dist[:, None] + 1e-6)  # (6, 3)
         projected_vec = dir_vec * self.projected_dist[:, None]  # (6, 3)
 
-        # Compute final reference vector
+        # 计算最终参考向量
         reference_vec = np.where(self.projected[:, None], projected_vec, normal_vec[:len_proj])  # (6, 3)
         reference_vec = np.concatenate([reference_vec, normal_vec[len_proj:]], axis=0)  # (10, 3)
         torch_target_vec = torch.as_tensor(reference_vec, dtype=torch.float32)
@@ -455,7 +455,7 @@ class DexPilotOptimizer(Optimizer):
         def objective(x: np.ndarray, grad: np.ndarray) -> float:
             qpos[self.idx_pin2target] = x
 
-            # Kinematics forwarding for qpos
+            # 对 qpos 进行运动学前向传递
             if self.adaptor is not None:
                 qpos[:] = self.adaptor.forward_qpos(qpos)[:]
 
@@ -463,17 +463,17 @@ class DexPilotOptimizer(Optimizer):
             target_link_poses = [self.robot.get_link_pose(index) for index in self.computed_link_indices]
             body_pos = np.array([pose[:3, 3] for pose in target_link_poses])
 
-            # Torch computation for accurate loss and grad
+            # 使用 Torch 计算以获得精确的损失和梯度
             torch_body_pos = torch.as_tensor(body_pos)
             torch_body_pos.requires_grad_()
 
-            # Index link for computation
+            # 为计算建立连杆索引
             origin_link_pos = torch_body_pos[self.origin_link_indices, :]
             task_link_pos = torch_body_pos[self.task_link_indices, :]
             robot_vec = task_link_pos - origin_link_pos
 
-            # Loss term for kinematics retargeting based on 3D position error
-            # Different from the original DexPilot, we use huber loss here instead of the squared dist
+            # 基于 3D 位置误差的运动学重定向损失项
+            # 与原始 DexPilot 不同，这里使用 huber 损失而非距离平方
             vec_dist = torch.norm(robot_vec - torch_target_vec, dim=1, keepdim=False)
             huber_distance = (
                 self.huber_loss(vec_dist, torch.zeros_like(vec_dist)) * weight / (robot_vec.shape[0])
@@ -490,12 +490,12 @@ class DexPilotOptimizer(Optimizer):
                     link_kinematics_jacobian = link_rot @ link_body_jacobian
                     jacobians.append(link_kinematics_jacobian)
 
-                # Note: the joint order in this jacobian is consistent pinocchio
+                # 注意：该雅可比矩阵中的关节顺序与 pinocchio 一致
                 jacobians = np.stack(jacobians, axis=0)
                 huber_distance.backward()
                 grad_pos = torch_body_pos.grad.cpu().numpy()[:, None, :]
 
-                # Convert the jacobian from pinocchio order to target order
+                # 将雅可比矩阵从 pinocchio 顺序转换为目标顺序
                 if self.adaptor is not None:
                     jacobians = self.adaptor.backward_jacobian(jacobians)
                 else:
@@ -504,9 +504,9 @@ class DexPilotOptimizer(Optimizer):
                 grad_qpos = np.matmul(grad_pos, np.array(jacobians))
                 grad_qpos = grad_qpos.mean(1).sum(0)
 
-                # In the original DexPilot, γ = 2.5 × 10−3 is a weight on regularizing the Allegro angles to zero
-                # which is equivalent to fully opened the hand
-                # In our implementation, we regularize the joint angles to the previous joint angles
+                # 在原始 DexPilot 中，γ = 2.5 × 10−3 是将 Allegro 关节角正则化到零的权重
+                # 这等价于让手完全张开
+                # 在我们的实现中，将关节角正则化到上一时刻的关节角
                 grad_qpos += 2 * self.norm_delta * (x - last_qpos)
 
                 grad[:] = grad_qpos[:]

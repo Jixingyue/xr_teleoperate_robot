@@ -460,9 +460,9 @@ class Auboi5Robot:
         """"
         * FUNCTION:    check_event
         * DESCRIPTION: 检查机械臂是否发生异常事件
-        * INPUTS:      input
-        * OUTPUTS:     output
-        * RETURNS:     void
+        * INPUTS:      无输入
+        * OUTPUTS:     无输出
+        * RETURNS:     无
         * NOTES:       如果接收到的是异常事件，则函数抛出异常事件
         """
         if self.last_error.error_type != RobotErrorType.RobotError_SUCC:
@@ -493,8 +493,8 @@ class Auboi5Robot:
         """"
         * FUNCTION:    uninitialize
         * DESCRIPTION: 反初始化机械臂控制库
-        * INPUTS:      input
-        * OUTPUTS:     output
+        * INPUTS:      无输入
+        * OUTPUTS:     无输出
         * RETURNS:     成功返回: RobotError.RobotError_SUCC
         *              失败返回: 其他
         * NOTES:

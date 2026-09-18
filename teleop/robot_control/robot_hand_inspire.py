@@ -33,18 +33,18 @@ class Inspire_Controller:
         else:
             ChannelFactoryInitialize(0)
 
-        # initialize handcmd publisher and handstate subscriber
+        # 初始化手部命令发布者与手部状态订阅者
         self.HandCmb_publisher = ChannelPublisher(kTopicInspireCommand, MotorCmds_)
         self.HandCmb_publisher.Init()
 
         self.HandState_subscriber = ChannelSubscriber(kTopicInspireState, MotorStates_)
         self.HandState_subscriber.Init()
 
-        # Shared Arrays for hand states
+        # 用于手部状态的共享数组
         self.left_hand_state_array  = Array('d', Inspire_Num_Motors, lock=True)  
         self.right_hand_state_array = Array('d', Inspire_Num_Motors, lock=True)
 
-        # initialize subscribe thread
+        # 初始化订阅线程
         self.subscribe_state_thread = threading.Thread(target=self._subscribe_hand_state)
         self.subscribe_state_thread.daemon = True
         self.subscribe_state_thread.start()
@@ -75,7 +75,7 @@ class Inspire_Controller:
 
     def ctrl_dual_hand(self, left_q_target, right_q_target):
         """
-        Set current left, right hand motor state target q
+        设置当前左手、右手电机状态的目标 q
         """
         for idx, id in enumerate(Inspire_Left_Hand_JointIndex):             
             self.hand_msg.cmds[id].q = left_q_target[idx]         
@@ -92,7 +92,7 @@ class Inspire_Controller:
         left_q_target  = np.full(Inspire_Num_Motors, 1.0)
         right_q_target = np.full(Inspire_Num_Motors, 1.0)
 
-        # initialize inspire hand's cmd msg
+        # 初始化 Inspire 手部的命令消息
         self.hand_msg  = MotorCmds_()
         self.hand_msg.cmds = [unitree_go_msg_dds__MotorCmd_() for _ in range(len(Inspire_Right_Hand_JointIndex) + len(Inspire_Left_Hand_JointIndex))]
 
@@ -104,29 +104,29 @@ class Inspire_Controller:
         try:
             while self.running:
                 start_time = time.time()
-                # get dual hand state
+                # 获取双手状态
                 with left_hand_array.get_lock():
                     left_hand_data  = np.array(left_hand_array[:]).reshape(25, 3).copy()
                 with right_hand_array.get_lock():
                     right_hand_data = np.array(right_hand_array[:]).reshape(25, 3).copy()
 
-                # Read left and right q_state from shared arrays
+                # 从共享数组读取左右手 q_state
                 state_data = np.concatenate((np.array(left_hand_state_array[:]), np.array(right_hand_state_array[:])))
 
-                if not np.all(right_hand_data == 0.0) and not np.all(left_hand_data[4] == np.array([-1.13, 0.3, 0.15])): # if hand data has been initialized.
+                if not np.all(right_hand_data == 0.0) and not np.all(left_hand_data[4] == np.array([-1.13, 0.3, 0.15])): # 判断手部数据是否已初始化。
                     ref_left_value = left_hand_data[self.hand_retargeting.left_indices[1,:]] - left_hand_data[self.hand_retargeting.left_indices[0,:]]
                     ref_right_value = right_hand_data[self.hand_retargeting.right_indices[1,:]] - right_hand_data[self.hand_retargeting.right_indices[0,:]]
 
                     left_q_target  = self.hand_retargeting.left_retargeting.retarget(ref_left_value)[self.hand_retargeting.left_dex_retargeting_to_hardware]
                     right_q_target = self.hand_retargeting.right_retargeting.retarget(ref_right_value)[self.hand_retargeting.right_dex_retargeting_to_hardware]
 
-                    # In website https://support.unitree.com/home/en/G1_developer/inspire_dfx_dexterous_hand, you can find
-                    #     In the official document, the angles are in the range [0, 1] ==> 0.0: fully closed  1.0: fully open
-                    # The q_target now is in radians, ranges:
-                    #     - idx 0~3: 0~1.7 (1.7 = closed)
-                    #     - idx 4:   0~0.5
-                    #     - idx 5:  -0.1~1.3
-                    # We normalize them using (max - value) / range
+                    # 在网站 https://support.unitree.com/home/en/G1_developer/inspire_dfx_dexterous_hand 中可以找到
+                    #     官方文档中角度范围为 [0, 1] ==> 0.0：完全闭合  1.0：完全张开
+                    # 当前 q_target 以弧度为单位，范围为：
+                    #     - 索引 0~3：0~1.7（1.7 = 闭合）
+                    #     - 索引 4：  0~0.5
+                    #     - 索引 5： -0.1~1.3
+                    # 使用 (max - value) / range 对其进行归一化
                     def normalize(val, min_val, max_val):
                         return np.clip((max_val - val) / (max_val - min_val), 0.0, 1.0)
 
@@ -141,7 +141,7 @@ class Inspire_Controller:
                             left_q_target[idx]  = normalize(left_q_target[idx], -0.1, 1.3)
                             right_q_target[idx] = normalize(right_q_target[idx], -0.1, 1.3)
 
-                # get dual hand action
+                # 获取双手动作
                 action_data = np.concatenate((left_q_target, right_q_target))    
                 if dual_hand_state_array and dual_hand_action_array:
                     with dual_hand_data_lock:
@@ -162,7 +162,7 @@ class Inspire_Controller:
         left_q_target  = np.full(Inspire_Num_Motors, 1.0)
         right_q_target = np.full(Inspire_Num_Motors, 1.0)
 
-        # initialize inspire hand's cmd msg
+        # 初始化 Inspire 手部的命令消息
         self.hand_msg  = MotorCmds_()
         self.hand_msg.cmds = [unitree_go_msg_dds__MotorCmd_() for _ in range(len(Inspire_Right_Hand_JointIndex) + len(Inspire_Left_Hand_JointIndex))]
 
@@ -176,13 +176,13 @@ class Inspire_Controller:
                 return np.clip((max_val - val) / (max_val - min_val), 0.0, 1.0)
             while self.running:
                 start_time = time.time()
-                # get dual hand state
+                # 获取双手状态
                 with left_hand_array.get_lock():
                     left_q_target  = left_hand_array[:Inspire_Num_Motors]
                 with right_hand_array.get_lock():
                     right_q_target = right_hand_array[:Inspire_Num_Motors]
 
-                # Read left and right q_state from shared arrays
+                # 从共享数组读取左右手 q_state
                 state_data = np.concatenate((np.array(left_hand_state_array[:]), np.array(right_hand_state_array[:])))
                 for idx in range(Inspire_Num_Motors):
                     if idx <= 3:
@@ -195,7 +195,7 @@ class Inspire_Controller:
                         left_q_target[idx]  = normalize(left_q_target[idx], -0.1, 1.3)
                         right_q_target[idx] = normalize(right_q_target[idx], -0.1, 1.3)
 
-                # get dual hand action
+                # 获取双手动作
                 action_data = np.concatenate((left_q_target, right_q_target))    
                 if dual_hand_state_array and dual_hand_action_array:
                     with dual_hand_data_lock:
@@ -209,13 +209,13 @@ class Inspire_Controller:
         finally:
             logger_mp.info("Inspire_Controller has been closed.")
 
-# Update hand state, according to the official documentation, https://support.unitree.com/home/en/G1_developer/inspire_dfx_dexterous_hand
-# the state sequence is as shown in the table below
+# 更新手部状态，根据官方文档 https://support.unitree.com/home/en/G1_developer/inspire_dfx_dexterous_hand
+# 状态顺序如下表所示
 # ┌──────┬───────┬──────┬────────┬────────┬────────────┬────────────────┬───────┬──────┬────────┬────────┬────────────┬────────────────┐
 # │ Id   │   0   │  1   │   2    │   3    │     4      │       5        │   6   │  7   │   8    │   9    │    10      │       11       │
 # ├──────┼───────┼──────┼────────┼────────┼────────────┼────────────────┼───────┼──────┼────────┼────────┼────────────┼────────────────┤
-# │      │                    Right Hand                                │                   Left Hand                                  │
-# │Joint │ pinky │ ring │ middle │ index  │ thumb-bend │ thumb-rotation │ pinky │ ring │ middle │ index  │ thumb-bend │ thumb-rotation │
+# │      │                             右手                             │                             左手                             │
+# │关节  │ 小指  │无名指│  中指  │  食指  │  拇指弯曲  │    拇指旋转    │ 小指  │无名指│  中指  │  食指  │  拇指弯曲  │    拇指旋转    │
 # └──────┴───────┴──────┴────────┴────────┴────────────┴────────────────┴───────┴──────┴────────┴────────┴────────────┴────────────────┘
 class Inspire_Right_Hand_JointIndex(IntEnum):
     kRightHandPinky = 0

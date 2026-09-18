@@ -13,7 +13,7 @@ class RerunEpisodeReader:
         self.json_file = json_file
 
     def return_episode_data(self, episode_idx):
-        # Load episode data on-demand
+        # 按需加载 episode 数据
         episode_dir = os.path.join(self.task_dir, f"episode_{episode_idx:04d}")
         json_path = os.path.join(episode_dir, self.json_file)
 
@@ -25,14 +25,14 @@ class RerunEpisodeReader:
 
         episode_data = []
 
-        # Loop over the data entries and process each one
+        # 遍历数据条目并逐条处理
         for item_data in json_file['data']:
-            # Process images and other data
+            # 处理图像及其他数据
             colors = self._process_images(item_data, 'colors', episode_dir)
             depths = self._process_images(item_data, 'depths', episode_dir)
             audios = self._process_audio(item_data, 'audios', episode_dir)
 
-            # Append the data in the item_data list
+            # 将该条数据追加到列表中
             episode_data.append(
                 {
                     'idx': item_data.get('idx', 0),
@@ -67,7 +67,7 @@ class RerunEpisodeReader:
             if file_name:
                 file_path = os.path.join(dir_path, file_name)
                 if os.path.exists(file_path):
-                    pass  # Handle audio data if needed
+                    pass  # 如有需要，在此处理音频数据
         return audio_data
 
 class RerunLogger:
@@ -80,7 +80,7 @@ class RerunLogger:
         else:
             rr.spawn(hide_welcome_screen = True)
 
-        # Set up blueprint for live visualization
+        # 为实时可视化设置 blueprint（蓝图）
         if self.IdxRangeBoundary:
             self.setup_blueprint()
 
@@ -139,7 +139,7 @@ class RerunLogger:
     def log_item_data(self, item_data: dict):
         rr.set_time_sequence("idx", item_data.get('idx', 0))
 
-        # Log states
+        # 记录 states（状态）
         states = item_data.get('states', {}) or {}
         for part, state_info in states.items():
             if part != "body" and state_info:
@@ -147,7 +147,7 @@ class RerunLogger:
                 for idx, val in enumerate(values):
                     rr.log(f"{self.prefix}{part}/states/qpos/{idx}", rr.Scalar(val))
 
-        # Log actions
+        # 记录 actions（动作）
         actions = item_data.get('actions', {}) or {}
         for part, action_info in actions.items():
             if part != "body" and action_info:
@@ -155,30 +155,30 @@ class RerunLogger:
                 for idx, val in enumerate(values):
                     rr.log(f"{self.prefix}{part}/actions/qpos/{idx}", rr.Scalar(val))
 
-        # # Log colors (images)
+        # # 记录 colors（图像）
         # colors = item_data.get('colors', {}) or {}
         # for color_key, color_val in colors.items():
         #     if color_val is not None:
         #         rr.log(f"{self.prefix}colors/{color_key}", rr.Image(color_val))
 
-        # # Log depths (images)
+        # # 记录 depths（depth/深度图像）
         # depths = item_data.get('depths', {}) or {}
         # for depth_key, depth_val in depths.items():
         #     if depth_val is not None:
         #         # rr.log(f"{self.prefix}depths/{depth_key}", rr.Image(depth_val))
-        #         pass # Handle depth if needed
+        #         pass # 如有需要，处理 depth/深度数据
 
-        # # Log tactile if needed
+        # # 如有需要，记录 tactile（触觉）
         # tactiles = item_data.get('tactiles', {}) or {}
         # for hand, tactile_vals in tactiles.items():
         #     if tactile_vals is not None:
-        #         pass # Handle tactile if needed
+        #         pass # 如有需要，处理 tactile/触觉数据
 
-        # # Log audios if needed
+        # # 如有需要，记录 audios（音频）
         # audios = item_data.get('audios', {}) or {}
         # for audio_key, audio_val in audios.items():
         #     if audio_val is not None:
-        #         pass  # Handle audios if needed
+        #         pass  # 如有需要，处理音频数据
 
     def log_episode_data(self, episode_data: list):
         for item_data in episode_data:
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
 
     episode_reader = RerunEpisodeReader(task_dir = unzip_file_output_dir)
-    # TEST EXAMPLE 1 : OFFLINE DATA TEST
+    # 测试示例 1：离线数据测试
     user_input = input("Please enter the start signal (enter 'off' or 'on' to start the subsequent program):\n")
     if user_input.lower() == 'off':
         episode_data6 = episode_reader.return_episode_data(6)
@@ -221,7 +221,7 @@ if __name__ == "__main__":
         offline_logger.log_episode_data(episode_data6)
         logger_mp.info("Offline visualization completed.")
 
-    # TEST EXAMPLE 2 : ONLINE DATA TEST, SLIDE WINDOW SIZE IS 60, MEMORY LIMIT IS 50MB
+    # 测试示例 2：在线数据测试，滑动窗口大小为 60，内存限制为 50MB
     if user_input.lower() == 'on':
         episode_data8 = episode_reader.return_episode_data(8)
         logger_mp.info("Starting online visualization with fixed idx size...")
@@ -232,14 +232,14 @@ if __name__ == "__main__":
         logger_mp.info("Online visualization completed.")
 
 
-    # # TEST DATA OF data_dir
+    # # data_dir 的测试数据
     # data_dir = "./data"
     # episode_data_number = 10
     # episode_reader2 = RerunEpisodeReader(task_dir = data_dir)
     # user_input = input("Please enter the start signal (enter 'on' to start the subsequent program):\n")
     # episode_data8 = episode_reader2.return_episode_data(episode_data_number)
     # if user_input.lower() == 'on':
-    #     # Example 2: Offline Visualization with Fixed Time Window
+    #     # 示例 2：固定时间窗口的离线可视化
     #     logger_mp.info("Starting offline visualization with fixed idx size...")
     #     online_logger = RerunLogger(prefix="offline/", IdxRangeBoundary = 60)
     #     for item_data in episode_data8:

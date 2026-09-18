@@ -21,57 +21,57 @@ class RetargetingConfig:
     urdf_path: str
     target_joint_names: Optional[List[str]] = None
 
-    # Whether to add free joint to the root of the robot. Free joint enable the robot hand move freely in the space
+    # 是否为机器人根部添加自由关节。自由关节使机器人手可以在空间中自由移动
     add_dummy_free_joint: bool = False
 
-    # DexPilot retargeting related
-    # The link on the robot hand which corresponding to the wrist of human hand
+    # DexPilot 重定向相关
+    # 机器人手上对应人手手腕的连杆
     wrist_link_name: Optional[str] = None
-    # DexPilot retargeting link names
+    # DexPilot 重定向连杆名称
     finger_tip_link_names: Optional[List[str]] = None
     target_link_human_indices_dexpilot: Optional[np.ndarray] = None
 
-    # Position retargeting link names
+    # Position 重定向连杆名称
     target_link_names: Optional[List[str]] = None
     target_link_human_indices_position: Optional[np.ndarray] = None
 
-    # Vector retargeting link names
+    # Vector 重定向连杆名称
     target_origin_link_names: Optional[List[str]] = None
     target_task_link_names: Optional[List[str]] = None
     target_link_human_indices_vector: Optional[np.ndarray] = None
 
-    # Scaling factor for vector retargeting only
-    # For example, Allegro is 1.6 times larger than normal human hand, then this scaling factor should be 1.6
+    # 仅用于 vector 重定向的缩放系数
+    # 例如，Allegro 比普通人手大 1.6 倍，则该缩放系数应为 1.6
     scaling_factor: float = 1.0
 
-    # Low pass filter
+    # 低通滤波器
     low_pass_alpha: float = 0.1
 
-    # Optimization parameters
+    # 优化参数
     normal_delta: float = 4e-3
     huber_delta: float = 2e-2
 
-    # DexPilot optimizer parameters
+    # DexPilot 优化器参数
     project_dist: float = 0.03
     escape_dist: float = 0.05
 
-    # Joint limit tag
+    # 关节限位标记
     has_joint_limits: bool = True
 
-    # Mimic joint tag
+    # mimic 关节标记
     ignore_mimic_joint: bool = False
 
     _TYPE = ["vector", "position", "dexpilot"]
     _DEFAULT_URDF_DIR = "./"
 
     def __post_init__(self):
-        # Retargeting type check
+        # 重定向类型检查
         self.type = self.type.lower()
         if self.type not in self._TYPE:
             raise ValueError(f"Retargeting type must be one of {self._TYPE}")
 
-        # Vector retargeting requires: target_origin_link_names + target_task_link_names
-        # Position retargeting requires: target_link_names
+        # Vector 重定向需要: target_origin_link_names + target_task_link_names
+        # Position 重定向需要: target_link_names
         if self.type == "vector":
             if self.target_origin_link_names is None or self.target_task_link_names is None:
                 raise ValueError(f"Vector retargeting requires: target_origin_link_names + target_task_link_names")
@@ -102,7 +102,7 @@ class RetargetingConfig:
                     "\033[00m",
                 )
 
-        # URDF path check
+        # URDF 路径检查
         urdf_path = Path(self.urdf_path)
         if not urdf_path.is_absolute():
             urdf_path = self._DEFAULT_URDF_DIR / urdf_path
@@ -152,7 +152,7 @@ class RetargetingConfig:
         )
         import tempfile
 
-        # Process the URDF with yourdfpy to better find file path
+        # 使用 yourdfpy 处理 URDF 以便更好地查找文件路径
         robot_urdf = urdf.URDF.load(
             self.urdf_path, add_dummy_free_joints=self.add_dummy_free_joint, build_scene_graph=False
         )
@@ -161,10 +161,10 @@ class RetargetingConfig:
         temp_path = f"{temp_dir}/{urdf_name}"
         robot_urdf.write_xml_file(temp_path)
 
-        # Load pinocchio model
+        # 加载 pinocchio 模型
         robot = RobotWrapper(temp_path)
 
-        # Add 6D dummy joint to target joint names so that it will also be optimized
+        # 将 6D dummy 关节加入目标关节名称，使其同样参与优化
         if self.add_dummy_free_joint and self.target_joint_names is not None:
             self.target_joint_names = DUMMY_JOINT_NAMES + self.target_joint_names
         joint_names = self.target_joint_names if self.target_joint_names is not None else robot.dof_joint_names
@@ -208,7 +208,7 @@ class RetargetingConfig:
         else:
             lp_filter = None
 
-        # Parse mimic joints and set kinematics adaptor for optimizer
+        # 解析 mimic 关节并为优化器设置运动学适配器
         has_mimic_joints, source_names, mimic_names, multipliers, offsets = parse_mimic_joint(robot_urdf)
         if has_mimic_joints and not self.ignore_mimic_joint:
             adaptor = MimicJointKinematicAdaptor(

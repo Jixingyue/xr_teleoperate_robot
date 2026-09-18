@@ -12,8 +12,8 @@ logger_mp = logging_mp.get_logger(__name__, level=logging_mp.DEBUG)
 class RealSenseCamera(object):
     def __init__(self, img_shape, fps, serial_number=None, enable_depth=False) -> None:
         """
-        img_shape: [height, width]
-        serial_number: serial number
+        img_shape: [高度, 宽度]
+        serial_number: 序列号
         """
         self.img_shape = img_shape
         self.fps = fps
@@ -70,8 +70,8 @@ class RealSenseCamera(object):
 class OpenCVCamera():
     def __init__(self, device_id, img_shape, fps):
         """
-        decive_id: /dev/video* or *
-        img_shape: [height, width]
+        decive_id: /dev/video* 或 *
+        img_shape: [高度, 宽度]
         """
         self.id = device_id
         self.fps = fps
@@ -82,7 +82,7 @@ class OpenCVCamera():
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH,  self.img_shape[1])
         self.cap.set(cv2.CAP_PROP_FPS, self.fps)
 
-        # Test if the camera can read frames
+        # 测试相机是否能够读取画面
         if not self._can_read_frame():
             logger_mp.error(f"[Image Server] Camera {self.id} Error: Failed to initialize the camera or read frames. Exiting...")
             self.release()
@@ -104,55 +104,55 @@ class OpenCVCamera():
 class ImageServer:
     def __init__(self, config, port = 5555, Unit_Test = False):
         """
-        config example1:
+        config 示例1:
         {
-            'fps':30                                                          # frame per second
-            'head_camera_type': 'opencv',                                     # opencv or realsense
-            'head_camera_image_shape': [480, 1280],                           # Head camera resolution  [height, width]
-            'head_camera_id_numbers': [0],                                    # '/dev/video0' (opencv)
+            'fps':30                                                          # 每秒帧数
+            'head_camera_type': 'opencv',                                     # opencv 或 realsense
+            'head_camera_image_shape': [480, 1280],                           # 头部相机分辨率 [高度, 宽度]
+            'head_camera_id_numbers': [0],                                    # '/dev/video0'（opencv）
             'wrist_camera_type': 'realsense', 
-            'wrist_camera_image_shape': [480, 640],                           # Wrist camera resolution  [height, width]
-            'wrist_camera_id_numbers': ["218622271789", "241222076627"],      # realsense camera's serial number
+            'wrist_camera_image_shape': [480, 640],                           # 腕部相机分辨率 [高度, 宽度]
+            'wrist_camera_id_numbers': ["218622271789", "241222076627"],      # RealSense 相机的序列号
         }
 
-        config example2:
+        config 示例2:
         {
-            'fps':30                                                          # frame per second
-            'head_camera_type': 'realsense',                                  # opencv or realsense
-            'head_camera_image_shape': [480, 640],                            # Head camera resolution  [height, width]
-            'head_camera_id_numbers': ["218622271739"],                       # realsense camera's serial number
+            'fps':30                                                          # 每秒帧数
+            'head_camera_type': 'realsense',                                  # opencv 或 realsense
+            'head_camera_image_shape': [480, 640],                            # 头部相机分辨率 [高度, 宽度]
+            'head_camera_id_numbers': ["218622271739"],                       # RealSense 相机的序列号
             'wrist_camera_type': 'opencv', 
-            'wrist_camera_image_shape': [480, 640],                           # Wrist camera resolution  [height, width]
-            'wrist_camera_id_numbers': [0,1],                                 # '/dev/video0' and '/dev/video1' (opencv)
+            'wrist_camera_image_shape': [480, 640],                           # 腕部相机分辨率 [高度, 宽度]
+            'wrist_camera_id_numbers': [0,1],                                 # '/dev/video0' 和 '/dev/video1'（opencv）
         }
 
-        If you are not using the wrist camera, you can comment out its configuration, like this below:
+        如果不使用腕部相机，可以将其配置注释掉，如下所示：
         config:
         {
-            'fps':30                                                          # frame per second
-            'head_camera_type': 'opencv',                                     # opencv or realsense
-            'head_camera_image_shape': [480, 1280],                           # Head camera resolution  [height, width]
-            'head_camera_id_numbers': [0],                                    # '/dev/video0' (opencv)
+            'fps':30                                                          # 每秒帧数
+            'head_camera_type': 'opencv',                                     # opencv 或 realsense
+            'head_camera_image_shape': [480, 1280],                           # 头部相机分辨率 [高度, 宽度]
+            'head_camera_id_numbers': [0],                                    # '/dev/video0'（opencv）
             #'wrist_camera_type': 'realsense', 
-            #'wrist_camera_image_shape': [480, 640],                           # Wrist camera resolution  [height, width]
-            #'wrist_camera_id_numbers': ["218622271789", "241222076627"],      # serial number (realsense)
+            #'wrist_camera_image_shape': [480, 640],                           # 腕部相机分辨率 [高度, 宽度]
+            #'wrist_camera_id_numbers': ["218622271789", "241222076627"],      # 序列号（realsense）
         }
         """
         logger_mp.info(config)
         self.fps = config.get('fps', 30)
         self.head_camera_type = config.get('head_camera_type', 'opencv')
-        self.head_image_shape = config.get('head_camera_image_shape', [480, 640])      # (height, width)
+        self.head_image_shape = config.get('head_camera_image_shape', [480, 640])      # （高度，宽度）
         self.head_camera_id_numbers = config.get('head_camera_id_numbers', [0])
 
         self.wrist_camera_type = config.get('wrist_camera_type', None)
-        self.wrist_image_shape = config.get('wrist_camera_image_shape', [480, 640])    # (height, width)
+        self.wrist_image_shape = config.get('wrist_camera_image_shape', [480, 640])    # （高度，宽度）
         self.wrist_camera_id_numbers = config.get('wrist_camera_id_numbers', None)
 
         self.port = port
         self.Unit_Test = Unit_Test
 
 
-        # Initialize head cameras
+        # 初始化头部相机
         self.head_cameras = []
         if self.head_camera_type == 'opencv':
             for device_id in self.head_camera_id_numbers:
@@ -165,7 +165,7 @@ class ImageServer:
         else:
             logger_mp.warning(f"[Image Server] Unsupported head_camera_type: {self.head_camera_type}")
 
-        # Initialize wrist cameras if provided
+        # 如有配置，初始化腕部相机
         self.wrist_cameras = []
         if self.wrist_camera_type and self.wrist_camera_id_numbers:
             if self.wrist_camera_type == 'opencv':
@@ -179,7 +179,7 @@ class ImageServer:
             else:
                 logger_mp.warning(f"[Image Server] Unsupported wrist_camera_type: {self.wrist_camera_type}")
 
-        # Set ZeroMQ context and socket
+        # 创建 ZeroMQ/ZMQ 上下文和套接字
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUB)
         self.socket.bind(f"tcp://*:{self.port}")
@@ -208,18 +208,18 @@ class ImageServer:
 
 
     def _init_performance_metrics(self):
-        self.frame_count = 0  # Total frames sent
-        self.time_window = 1.0  # Time window for FPS calculation (in seconds)
-        self.frame_times = deque()  # Timestamps of frames sent within the time window
-        self.start_time = time.time()  # Start time of the streaming
+        self.frame_count = 0  # 已发送的总帧数
+        self.time_window = 1.0  # 用于计算 fps/帧率的时间窗口（单位：秒）
+        self.frame_times = deque()  # 时间窗口内已发送帧的时间戳
+        self.start_time = time.time()  # 推流开始时间
 
     def _update_performance_metrics(self, current_time):
-        # Add current time to frame times deque
+        # 将当前时间加入帧时间戳双端队列
         self.frame_times.append(current_time)
-        # Remove timestamps outside the time window
+        # 移除时间窗口之外的时间戳
         while self.frame_times and self.frame_times[0] < current_time - self.time_window:
             self.frame_times.popleft()
-        # Increment frame count
+        # 帧计数加一
         self.frame_count += 1
 
     def _print_performance_metrics(self, current_time):
@@ -279,7 +279,7 @@ class ImageServer:
                         wrist_frames.append(color_image)
                     wrist_color = cv2.hconcat(wrist_frames)
 
-                    # Concatenate head and wrist frames
+                    # 拼接头部与腕部画面
                     full_color = self.safe_hconcat(head_color, wrist_color)
                 else:
                     full_color = head_color
@@ -294,7 +294,7 @@ class ImageServer:
                 if self.Unit_Test:
                     timestamp = time.time()
                     frame_id = self.frame_count
-                    header = struct.pack('dI', timestamp, frame_id)  # 8-byte double, 4-byte unsigned int
+                    header = struct.pack('dI', timestamp, frame_id)  # 8 字节 double，4 字节无符号整数
                     message = header + jpg_bytes
                 else:
                     message = jpg_bytes
@@ -316,10 +316,10 @@ if __name__ == "__main__":
     config = {
         'fps': 30,
         'head_camera_type': 'opencv',
-        'head_camera_image_shape': [480, 1280],  # Head camera resolution
+        'head_camera_image_shape': [480, 1280],  # 头部相机分辨率
         'head_camera_id_numbers': [2],
         'wrist_camera_type': 'opencv',
-        'wrist_camera_image_shape': [480, 640],  # Wrist camera resolution
+        'wrist_camera_image_shape': [480, 640],  # 腕部相机分辨率
         'wrist_camera_id_numbers': [],
     }
 

@@ -19,25 +19,25 @@ class SeqRetargeting:
         self.optimizer = optimizer
         robot = self.optimizer.robot
 
-        # Joint limit
+        # 关节限位
         self.has_joint_limits = has_joint_limits
         joint_limits = np.ones_like(robot.joint_limits)
-        joint_limits[:, 0] = -1e4  # a large value is equivalent to no limit
+        joint_limits[:, 0] = -1e4  # 一个足够大的值等价于无限制
         joint_limits[:, 1] = 1e4
         if has_joint_limits:
             joint_limits[:] = robot.joint_limits[:]
             self.optimizer.set_joint_limit(joint_limits[self.optimizer.idx_pin2target])
         self.joint_limits = joint_limits[self.optimizer.idx_pin2target]
 
-        # Temporal information
+        # 时序信息
         self.last_qpos = joint_limits.mean(1)[self.optimizer.idx_pin2target].astype(np.float32)
         self.accumulated_time = 0
         self.num_retargeting = 0
 
-        # Filter
+        # 滤波器
         self.filter = lp_filter
 
-        # Warm started
+        # 热启动
         self.is_warm_started = False
 
     def warm_start(
@@ -48,17 +48,17 @@ class SeqRetargeting:
         is_mano_convention: bool = False,
     ):
         """
-        Initialize the wrist joint pose using analytical computation instead of retargeting optimization.
-        This function is specifically for position retargeting with the flying robot hand, i.e. has 6D free joint
-        You are not expected to use this function for vector retargeting, e.g. when you are working on teleoperation
+        使用解析计算（而非重定向优化）来初始化手腕关节位姿。
+        本函数专门用于带飞行机器人手（即具有 6D 自由关节）的 position 重定向
+        不建议在 vector 重定向中使用本函数，例如进行遥操作时
 
         Args:
-            wrist_pos: position of the hand wrist, typically from human hand pose
-            wrist_quat: quaternion of the hand wrist, the same convention as the operator frame definition if not is_mano_convention
-            hand_type: hand type, used to determine the operator2mano matrix
-            is_mano_convention: whether the wrist_quat is in mano convention
+            wrist_pos: 手腕的位置，通常来自人手姿态
+            wrist_quat: 手腕的四元数；当 is_mano_convention 为 False 时，其约定与 operator 坐标系定义一致
+            hand_type: 手的类型，用于确定 operator2mano 矩阵
+            is_mano_convention: wrist_quat 是否采用 mano 约定
         """
-        # This function can only be used when the first joints of robot are free joints
+        # 本函数只能在机器人的首个关节为自由关节时使用
 
         if len(wrist_pos) != 3:
             raise ValueError(f"Wrist pos: {wrist_pos} is not a 3-dim vector.")
@@ -81,7 +81,7 @@ class SeqRetargeting:
         ]
         wrist_link_id = robot.get_joint_parent_child_frames(name_list[5])[1]
 
-        # Set the dummy joints angles to zero
+        # 将 dummy 关节的角度置零
         old_qpos = robot.q0
         new_qpos = old_qpos.copy()
         for num, joint_name in enumerate(self.optimizer.target_joint_names):
@@ -95,7 +95,7 @@ class SeqRetargeting:
         euler = rotations.euler_from_matrix(target_root_pose[:3, :3], 0, 1, 2, extrinsic=False)
         pose_vec = np.concatenate([target_root_pose[:3, 3], euler])
 
-        # Find the dummy joints
+        # 查找 dummy 关节
         for num, joint_name in enumerate(self.optimizer.target_joint_names):
             if joint_name in name_list:
                 index = name_list.index(joint_name)

@@ -24,15 +24,15 @@ from teleop.image_server.image_client import ImageClient
 from teleop.utils.episode_writer import EpisodeWriter
 from sshkeyboard import listen_keyboard, stop_listening
 
-# for simulation
+# 用于仿真
 from unitree_sdk2py.core.channel import ChannelPublisher
 from unitree_sdk2py.idl.std_msgs.msg.dds_ import String_
-def publish_reset_category(category: int,publisher): # Scene Reset signal
+def publish_reset_category(category: int,publisher): # 场景重置信号
     msg = String_(data=str(category))
     publisher.Write(msg)
     logger_mp.info(f"published reset category: {category}")
 
-# state transition
+# 状态转换
 start_signal = False
 running = True
 should_toggle_recording = False
@@ -54,46 +54,46 @@ listen_keyboard_thread.start()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--task_dir', type = str, default = './utils/data', help = 'path to save data')
-    parser.add_argument('--frequency', type = float, default = 60.0, help = 'save data\'s frequency')
+    parser.add_argument('--task_dir', type = str, default = './utils/data', help = '数据保存路径')
+    parser.add_argument('--frequency', type = float, default = 60.0, help = '数据保存频率')
 
-    # basic control parameters
-    parser.add_argument('--xr-mode', type=str, choices=['hand', 'controller'], default='controller', help='Select XR device tracking source')
-    parser.add_argument('--arm', type=str, choices=['G1_29', 'G1_23', 'H1_2', 'H1'], default='G1_29', help='Select arm controller')
-    parser.add_argument('--ee', type=str, choices=['dex1', 'dex3', 'inspire1', 'brainco'], help='Select end effector controller')
-    # mode flags
-    parser.add_argument('--record', action = 'store_true', help = 'Enable data recording')
-    parser.add_argument('--motion', action = 'store_true', help = 'Enable motion control mode')
-    parser.add_argument('--headless', action='store_true', help='Enable headless mode (no display)')
-    parser.add_argument('--sim', action = 'store_true', help = 'Enable isaac simulation mode')
+    # 基本控制参数
+    parser.add_argument('--xr-mode', type=str, choices=['hand', 'controller'], default='controller', help='选择 XR 设备追踪源')
+    parser.add_argument('--arm', type=str, choices=['G1_29', 'G1_23', 'H1_2', 'H1'], default='G1_29', help='选择机械臂控制器')
+    parser.add_argument('--ee', type=str, choices=['dex1', 'dex3', 'inspire1', 'brainco'], help='选择末端执行器控制器')
+    # 模式标志
+    parser.add_argument('--record', action = 'store_true', help = '启用数据记录')
+    parser.add_argument('--motion', action = 'store_true', help = '启用运动控制模式')
+    parser.add_argument('--headless', action='store_true', help='启用无头模式（无显示）')
+    parser.add_argument('--sim', action = 'store_true', help = '启用 Isaac 仿真模式')
 
     args = parser.parse_args()
     logger_mp.info(f"args: {args}")
 
-    # image client: img_config should be the same as the configuration in image_server.py (of Robot's development computing unit)
+    # 图像客户端：img_config 应与 image_server.py（机器人开发计算单元上）中的配置保持一致
     if args.sim:
         img_config = {
             'fps': 30,
             'head_camera_type': 'opencv',
-            'head_camera_image_shape': [480, 640],  # Head camera resolution
+            'head_camera_image_shape': [480, 640],  # 头部相机分辨率
             'head_camera_id_numbers': [0],
             'wrist_camera_type': 'opencv',
-            'wrist_camera_image_shape': [480, 640],  # Wrist camera resolution
+            'wrist_camera_image_shape': [480, 640],  # 手腕相机分辨率
             'wrist_camera_id_numbers': [2, 4],
         }
     else:
         img_config = {
             'fps': 30,
             'head_camera_type': 'opencv',
-            'head_camera_image_shape': [480, 1280],  # Head camera resolution
+            'head_camera_image_shape': [480, 1280],  # 头部相机分辨率
             'head_camera_id_numbers': [0],
             'wrist_camera_type': 'opencv',
-            'wrist_camera_image_shape': [480, 640],  # Wrist camera resolution
+            'wrist_camera_image_shape': [480, 640],  # 手腕相机分辨率
             'wrist_camera_id_numbers': [2, 4],
         }
 
 
-    ASPECT_RATIO_THRESHOLD = 2.0 # If the aspect ratio exceeds this value, it is considered binocular
+    ASPECT_RATIO_THRESHOLD = 2.0 # 若宽高比超过该值，则视为双目
     if len(img_config['head_camera_id_numbers']) > 1 or (img_config['head_camera_image_shape'][1] / img_config['head_camera_image_shape'][0] > ASPECT_RATIO_THRESHOLD):
         BINOCULAR = True
     else:
@@ -130,11 +130,11 @@ if __name__ == '__main__':
     image_receive_thread.daemon = True
     image_receive_thread.start()
 
-    # television: obtain hand pose data from the XR device and transmit the robot's head camera image to the XR device.
+    # television：从 XR 设备获取手部位姿数据，并将机器人头部相机图像传输到 XR 设备。
     tv_wrapper = TeleVuerWrapper(binocular=BINOCULAR, use_hand_tracking=args.xr_mode == "hand", img_shape=tv_img_shape, img_shm_name=tv_img_shm.name, 
                                  return_state_data=True, return_hand_rot_data = False)
 
-    # arm
+    # 机械臂
     if args.arm == "G1_29":
         arm_ctrl = G1_29_ArmController(motion_mode=args.motion, simulation_mode=args.sim)
         arm_ik = G1_29_ArmIK()
@@ -148,53 +148,53 @@ if __name__ == '__main__':
         arm_ctrl = H1_ArmController(simulation_mode=args.sim)
         arm_ik = H1_ArmIK()
 
-    # end-effector
+    # 末端执行器
     if args.ee == "dex3":
-        left_hand_pos_array = Array('d', 75, lock = True)      # [input]
-        right_hand_pos_array = Array('d', 75, lock = True)     # [input]
+        left_hand_pos_array = Array('d', 75, lock = True)      # [输入]
+        right_hand_pos_array = Array('d', 75, lock = True)     # [输入]
         dual_hand_data_lock = Lock()
-        dual_hand_state_array = Array('d', 14, lock = False)   # [output] current left, right hand state(14) data.
-        dual_hand_action_array = Array('d', 14, lock = False)  # [output] current left, right hand action(14) data.
+        dual_hand_state_array = Array('d', 14, lock = False)   # [输出] 当前左、右手状态（14）数据。
+        dual_hand_action_array = Array('d', 14, lock = False)  # [输出] 当前左、右手动作（14）数据。
         hand_ctrl = Dex3_1_Controller(left_hand_pos_array, right_hand_pos_array, dual_hand_data_lock, dual_hand_state_array, dual_hand_action_array, simulation_mode=args.sim)
     elif args.ee == "dex1":
-        left_gripper_value = Value('d', 0.0, lock=True)        # [input]
-        right_gripper_value = Value('d', 0.0, lock=True)       # [input]
+        left_gripper_value = Value('d', 0.0, lock=True)        # [输入]
+        right_gripper_value = Value('d', 0.0, lock=True)       # [输入]
         dual_gripper_data_lock = Lock()
-        dual_gripper_state_array = Array('d', 2, lock=False)   # current left, right gripper state(2) data.
-        dual_gripper_action_array = Array('d', 2, lock=False)  # current left, right gripper action(2) data.
+        dual_gripper_state_array = Array('d', 2, lock=False)   # 当前左、右夹爪状态（2）数据。
+        dual_gripper_action_array = Array('d', 2, lock=False)  # 当前左、右夹爪动作（2）数据。
         gripper_ctrl = Dex1_1_Gripper_Controller(left_gripper_value, right_gripper_value, dual_gripper_data_lock, dual_gripper_state_array, dual_gripper_action_array, simulation_mode=args.sim)
     elif args.ee == "inspire1":
-        left_hand_pos_array = Array('d', 75, lock = True)      # [input]
-        right_hand_pos_array = Array('d', 75, lock = True)     # [input]
+        left_hand_pos_array = Array('d', 75, lock = True)      # [输入]
+        right_hand_pos_array = Array('d', 75, lock = True)     # [输入]
         dual_hand_data_lock = Lock()
-        dual_hand_state_array = Array('d', 12, lock = False)   # [output] current left, right hand state(12) data.
-        dual_hand_action_array = Array('d', 12, lock = False)  # [output] current left, right hand action(12) data.
+        dual_hand_state_array = Array('d', 12, lock = False)   # [输出] 当前左、右手状态（12）数据。
+        dual_hand_action_array = Array('d', 12, lock = False)  # [输出] 当前左、右手动作（12）数据。
         hand_ctrl = Inspire_Controller(left_hand_pos_array, right_hand_pos_array, dual_hand_data_lock, dual_hand_state_array, dual_hand_action_array, simulation_mode=args.sim)
     elif args.ee == "brainco":
-        left_hand_pos_array = Array('d', 75, lock = True)      # [input]
-        right_hand_pos_array = Array('d', 75, lock = True)     # [input]
+        left_hand_pos_array = Array('d', 75, lock = True)      # [输入]
+        right_hand_pos_array = Array('d', 75, lock = True)     # [输入]
         dual_hand_data_lock = Lock()
-        dual_hand_state_array = Array('d', 12, lock = False)   # [output] current left, right hand state(12) data.
-        dual_hand_action_array = Array('d', 12, lock = False)  # [output] current left, right hand action(12) data.
+        dual_hand_state_array = Array('d', 12, lock = False)   # [输出] 当前左、右手状态（12）数据。
+        dual_hand_action_array = Array('d', 12, lock = False)  # [输出] 当前左、右手动作（12）数据。
         hand_ctrl = Brainco_Controller(left_hand_pos_array, right_hand_pos_array, dual_hand_data_lock, dual_hand_state_array, dual_hand_action_array, simulation_mode=args.sim)
     else:
         pass
 
-    # simulation mode
+    # 仿真模式
     if args.sim:
         reset_pose_publisher = ChannelPublisher("rt/reset_pose/cmd", String_)
         reset_pose_publisher.Init()
         from teleop.utils.sim_state_topic import start_sim_state_subscribe
         sim_state_subscriber = start_sim_state_subscribe()
 
-    # controller + motion mode
+    # 控制器 + 运动模式
     if args.xr_mode == "controller" and args.motion:
         from unitree_sdk2py.g1.loco.g1_loco_client import LocoClient
         sport_client = LocoClient()
         sport_client.SetTimeout(0.0001)
         sport_client.Init()
     
-    # record + headless mode
+    # 记录 + 无头模式
     if args.record and args.headless:
         recorder = EpisodeWriter(task_dir = args.task_dir, frequency = args.frequency, rerun_log = False)
     elif args.record and not args.headless:
@@ -234,7 +234,7 @@ if __name__ == '__main__':
                     recorder.save_episode()
                     if args.sim:
                         publish_reset_category(1, reset_pose_publisher)
-            # get input data
+            # 获取输入数据
             tele_data = tv_wrapper.get_motion_state_data()
             if (args.ee == "dex3" or args.ee == "inspire1" or args.ee == "brainco") and args.xr_mode == "hand":
                 with left_hand_pos_array.get_lock():
@@ -254,34 +254,34 @@ if __name__ == '__main__':
             else:
                 pass        
             
-            # high level control
+            # 高层控制
             if args.xr_mode == "controller" and args.motion:
-                # quit teleoperate
+                # 退出遥操作
                 if tele_data.tele_state.right_aButton:
                     running = False
                     stop_listening()
-                # command robot to enter damping mode. soft emergency stop function
+                # 命令机器人进入阻尼模式，即软急停功能
                 if tele_data.tele_state.left_thumbstick_state and tele_data.tele_state.right_thumbstick_state:
                     sport_client.Damp()
-                # control, limit velocity to within 0.3
+                # 控制，将速度限制在 0.3 以内
                 sport_client.Move(-tele_data.tele_state.left_thumbstick_value[1]  * 0.3,
                                   -tele_data.tele_state.left_thumbstick_value[0]  * 0.3,
                                   -tele_data.tele_state.right_thumbstick_value[0] * 0.3)
 
-            # get current robot state data.
+            # 获取当前机器人状态数据。
             current_lr_arm_q  = arm_ctrl.get_current_dual_arm_q()
             current_lr_arm_dq = arm_ctrl.get_current_dual_arm_dq()
 
-            # solve ik using motor data and wrist pose, then use ik results to control arms.
+            # 利用电机数据和手腕位姿求解 IK/逆运动学，再用 IK 结果控制机械臂。
             time_ik_start = time.time()
             sol_q, sol_tauff  = arm_ik.solve_ik(tele_data.left_arm_pose, tele_data.right_arm_pose, current_lr_arm_q, current_lr_arm_dq)
             time_ik_end = time.time()
             logger_mp.debug(f"ik:\t{round(time_ik_end - time_ik_start, 6)}")
             arm_ctrl.ctrl_dual_arm(sol_q, sol_tauff)
 
-            # record data
+            # 记录数据
             if args.record:
-                # dex hand or gripper
+                # 灵巧手或夹爪
                 if args.ee == "dex3" and args.xr_mode == "hand":
                     with dual_hand_data_lock:
                         left_ee_state = dual_hand_state_array[:7]
@@ -323,12 +323,12 @@ if __name__ == '__main__':
                     right_hand_action = []
                     current_body_state = []
                     current_body_action = []
-                # head image
+                # 头部图像
                 current_tv_image = tv_img_array.copy()
-                # wrist image
+                # 手腕图像
                 if WRIST:
                     current_wrist_image = wrist_img_array.copy()
-                # arm state and action
+                # 机械臂状态与动作
                 left_arm_state  = current_lr_arm_q[:7]
                 right_arm_state = current_lr_arm_q[-7:]
                 left_arm_action = sol_q[:7]
@@ -349,7 +349,7 @@ if __name__ == '__main__':
                             colors[f"color_{2}"] = current_wrist_image[:, wrist_img_shape[1]//2:]
                     states = {
                         "left_arm": {                                                                    
-                            "qpos":   left_arm_state.tolist(),    # numpy.array -> list
+                            "qpos":   left_arm_state.tolist(),    # numpy.array 转为 list
                             "qvel":   [],                          
                             "torque": [],                        
                         }, 

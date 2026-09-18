@@ -13,7 +13,7 @@ logger_mp = logging_mp.get_logger(__name__)
 class EpisodeWriter():
     def __init__(self, task_dir, frequency=30, image_size=[640, 480], rerun_log = True):
         """
-        image_size: [width, height]
+        image_size: [宽度, 高度]
         """
         logger_mp.info("==> EpisodeWriter initializing...\n")
         self.task_dir = task_dir
@@ -41,11 +41,11 @@ class EpisodeWriter():
         self.data_info()
         self.text_desc()
 
-        self.is_available = True  # Indicates whether the class is available for new operations
-        # Initialize the queue and worker thread
+        self.is_available = True  # 表示该类当前是否可接受新的操作
+        # 初始化队列和工作线程
         self.item_data_queue = Queue(-1)
         self.stop_worker = False
-        self.need_save = False  # Flag to indicate when save_episode is triggered
+        self.need_save = False  # 用于标记 save_episode 何时被触发的标志位
         self.worker_thread = Thread(target=self.process_queue)
         self.worker_thread.start()
 
@@ -83,17 +83,17 @@ class EpisodeWriter():
  
     def create_episode(self):
         """
-        Create a new episode.
+        创建一个新的 episode。
         Returns:
-            bool: True if the episode is successfully created, False otherwise.
+            bool: episode 创建成功返回 True，否则返回 False。
         Note:
-            Once successfully created, this function will only be available again after save_episode complete its save task.
+            一旦创建成功，该函数只有在 save_episode 完成其保存任务后才能再次使用。
         """
         if not self.is_available:
             logger_mp.info("==> The class is currently unavailable for new operations. Please wait until ongoing tasks are completed.")
-            return False  # Return False if the class is unavailable
+            return False  # 该类不可用时返回 False
 
-        # Reset episode-related data and create necessary directories
+        # 重置 episode 相关数据并创建所需的目录
         self.item_id = -1
         self.episode_data = []
         self.episode_id = self.episode_id + 1
@@ -110,14 +110,14 @@ class EpisodeWriter():
         if self.rerun_log:
             self.online_logger = RerunLogger(prefix="online/", IdxRangeBoundary = 60, memory_limit="300MB")
 
-        self.is_available = False  # After the episode is created, the class is marked as unavailable until the episode is successfully saved
+        self.is_available = False  # episode 创建后，该类被标记为不可用，直到 episode 成功保存
         logger_mp.info(f"==> New episode created: {self.episode_dir}")
-        return True  # Return True if the episode is successfully created
+        return True  # episode 创建成功时返回 True
         
     def add_item(self, colors, depths=None, states=None, actions=None, tactiles=None, audios=None, sim_state=None):
-        # Increment the item ID
+        # item ID 自增
         self.item_id += 1
-        # Create the item data dictionary
+        # 创建 item 数据字典
         item_data = {
             'idx': self.item_id,
             'colors': colors,
@@ -128,12 +128,12 @@ class EpisodeWriter():
             'audios': audios,
             'sim_state': sim_state,
         }
-        # Enqueue the item data
+        # 将 item 数据放入队列
         self.item_data_queue.put(item_data)
 
     def process_queue(self):
         while not self.stop_worker or not self.item_data_queue.empty():
-            # Process items in the queue
+            # 处理队列中的 item
             try:
                 item_data = self.item_data_queue.get(timeout=1)
                 try:
@@ -144,7 +144,7 @@ class EpisodeWriter():
             except Empty:
                 pass
         
-            # Check if save_episode was triggered
+            # 检查 save_episode 是否被触发
             if self.need_save and self.item_data_queue.empty():
                 self._save_episode()
 
@@ -154,7 +154,7 @@ class EpisodeWriter():
         depths = item_data.get('depths', {})
         audios = item_data.get('audios', {})
 
-        # Save images
+        # 保存图像
         if colors:
             for idx_color, (color_key, color) in enumerate(colors.items()):
                 color_name = f'{str(idx).zfill(6)}_{color_key}.jpg'
@@ -162,7 +162,7 @@ class EpisodeWriter():
                     logger_mp.info(f"Failed to save color image.")
                 item_data['colors'][color_key] = os.path.join('colors', color_name)
 
-        # Save depths
+        # 保存 depth/深度图
         if depths:
             for idx_depth, (depth_key, depth) in enumerate(depths.items()):
                 depth_name = f'{str(idx).zfill(6)}_{depth_key}.jpg'
@@ -170,17 +170,17 @@ class EpisodeWriter():
                     logger_mp.info(f"Failed to save depth image.")
                 item_data['depths'][depth_key] = os.path.join('depths', depth_name)
 
-        # Save audios
+        # 保存音频
         if audios:
             for mic, audio in audios.items():
                 audio_name = f'audio_{str(idx).zfill(6)}_{mic}.npy'
                 np.save(os.path.join(self.audio_dir, audio_name), audio.astype(np.int16))
                 item_data['audios'][mic] = os.path.join('audios', audio_name)
 
-        # Update episode data
+        # 更新 episode 数据
         self.episode_data.append(item_data)
 
-        # Log data if necessary
+        # 如有需要，记录数据日志
         if self.rerun_log:
             curent_record_time = time.time()
             logger_mp.info(f"==> episode_id:{self.episode_id}  item_id:{idx}  current_time:{curent_record_time}")
@@ -188,30 +188,30 @@ class EpisodeWriter():
 
     def save_episode(self):
         """
-        Trigger the save operation. This sets the save flag, and the process_queue thread will handle it.
+        触发保存操作。此处设置保存标志位，由 process_queue 线程负责处理。
         """
-        self.need_save = True  # Set the save flag
+        self.need_save = True  # 设置保存标志位
         logger_mp.info(f"==> Episode saved start...")
 
     def _save_episode(self):
         """
-        Save the episode data to a JSON file.
+        将 episode 数据保存到 JSON 文件。
         """
         self.data['info'] = self.info
         self.data['text'] = self.text
         self.data['data'] = self.episode_data
         with open(self.json_path, 'w', encoding='utf-8') as jsonf:
             jsonf.write(json.dumps(self.data, indent=4, ensure_ascii=False))
-        self.need_save = False     # Reset the save flag
-        self.is_available = True   # Mark the class as available after saving
+        self.need_save = False     # 重置保存标志位
+        self.is_available = True   # 保存完成后将该类标记为可用
         logger_mp.info(f"==> Episode saved successfully to {self.json_path}.")
 
     def close(self):
         """
-        Stop the worker thread and ensure all tasks are completed.
+        停止工作线程并确保所有任务均已完成。
         """
         self.item_data_queue.join()
-        if not self.is_available:  # If self.is_available is False, it means there is still data not saved.
+        if not self.is_available:  # 如果 self.is_available 为 False，说明仍有数据未保存。
             self.save_episode()
         while not self.is_available:
             time.sleep(0.01)

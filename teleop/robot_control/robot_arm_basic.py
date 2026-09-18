@@ -159,7 +159,7 @@ class RobotArmController(ABC):
         pass
     
     def ctrl_dual_arm(self, q_target, tauff_target):
-        '''Set control target values q & tau of the left and right arm motors.'''
+        '''设置左右臂电机的控制目标值 q 与前馈力矩 tau。'''
         with self.ctrl_lock:
             self.q_target = q_target
             self.tauff_target = tauff_target
@@ -210,13 +210,13 @@ class RobotArmController(ABC):
         pass
     
     def speed_gradual_max(self, t = 5.0):
-        '''Parameter t is the total time required for arms velocity to gradually increase to its maximum value, in seconds. The default is 5.0.'''
+        '''参数 t 为臂速度逐渐增大到最大值所需的总时间，单位为秒。默认为 5.0。'''
         self._gradual_start_time = time.time()
         self._gradual_time = t
         self._speed_gradual_max = True
 
     def speed_instant_max(self):
-        '''set arms velocity to the maximum value immediately, instead of gradually increasing.'''
+        '''立即将臂速度设置为最大值，而不是逐渐增大。'''
         self.arm_velocity_limit = 30.0
     
     

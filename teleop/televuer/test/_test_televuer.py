@@ -12,7 +12,7 @@ import logging_mp
 logger_mp = logging_mp.get_logger(__name__, level=logging_mp.INFO)
 
 def run_test_TeleVuer():
-    # image
+    # 图像
     image_shape = (480, 640 * 2, 3)
     image_shm = shared_memory.SharedMemory(create=True, size=np.prod(image_shape) * np.uint8().itemsize)
     image_array = np.ndarray(image_shape, dtype=np.uint8, buffer=image_shm.buf)
@@ -24,7 +24,7 @@ def run_test_TeleVuer():
     # image_receive_thread.daemon = True
     # image_receive_thread.start()
 
-    # xr-mode
+    # XR 模式
     use_hand_track = True
     tv = TeleVuer(binocular = True, use_hand_tracking = use_hand_track, img_shape = image_shape, img_shm_name = image_shm.name, webrtc=False)
 

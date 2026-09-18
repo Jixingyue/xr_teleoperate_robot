@@ -12,22 +12,22 @@ class ImageClient:
     def __init__(self, tv_img_shape = None, tv_img_shm_name = None, wrist_img_shape = None, wrist_img_shm_name = None, 
                        image_show = False, server_address = "192.168.123.164", port = 5555, Unit_Test = False):
         """
-        tv_img_shape: User's expected head camera resolution shape (H, W, C). It should match the output of the image service terminal.
+        tv_img_shape: 用户期望的头部相机分辨率形状 (H, W, C)，应与图像服务端的输出保持一致。
 
-        tv_img_shm_name: Shared memory is used to easily transfer images across processes to the Vuer.
+        tv_img_shm_name: shared memory/共享内存名称，用于方便地跨进程向 Vuer 传输图像。
 
-        wrist_img_shape: User's expected wrist camera resolution shape (H, W, C). It should maintain the same shape as tv_img_shape.
+        wrist_img_shape: 用户期望的腕部相机分辨率形状 (H, W, C)，应与 tv_img_shape 保持相同形状。
 
-        wrist_img_shm_name: Shared memory is used to easily transfer images.
+        wrist_img_shm_name: shared memory/共享内存名称，用于方便地传输图像。
         
-        image_show: Whether to display received images in real time.
+        image_show: 是否实时显示接收到的图像。
 
-        server_address: The ip address to execute the image server script.
+        server_address: 运行图像服务器脚本的 IP 地址。
 
-        port: The port number to bind to. It should be the same as the image server.
+        port: 要绑定的端口号，应与图像服务器保持一致。
 
-        Unit_Test: When both server and client are True, it can be used to test the image transfer latency, \
-                   network jitter, frame loss rate and other information.
+        Unit_Test: 当服务器和客户端均为 True 时，可用于测试图像传输 latency/延迟、\
+                   网络 jitter/抖动、丢帧率等信息。
         """
         self.running = True
         self._image_show = image_show
@@ -49,40 +49,40 @@ class ImageClient:
             self.wrist_img_array = np.ndarray(wrist_img_shape, dtype = np.uint8, buffer = self.wrist_image_shm.buf)
             self.wrist_enable_shm = True
 
-        # Performance evaluation parameters
+        # 性能评估参数
         self._enable_performance_eval = Unit_Test
         if self._enable_performance_eval:
             self._init_performance_metrics()
 
     def _init_performance_metrics(self):
-        self._frame_count = 0  # Total frames received
-        self._last_frame_id = -1  # Last received frame ID
+        self._frame_count = 0  # 已接收的总帧数
+        self._last_frame_id = -1  # 最近一次接收到的帧 ID
 
-        # Real-time FPS calculation using a time window
-        self._time_window = 1.0  # Time window size (in seconds)
-        self._frame_times = deque()  # Timestamps of frames received within the time window
+        # 使用时间窗口实时计算 fps/帧率
+        self._time_window = 1.0  # 时间窗口大小（单位：秒）
+        self._frame_times = deque()  # 时间窗口内接收到的各帧时间戳
 
-        # Data transmission quality metrics
-        self._latencies = deque()  # Latencies of frames within the time window
-        self._lost_frames = 0  # Total lost frames
-        self._total_frames = 0  # Expected total frames based on frame IDs
+        # 数据传输质量指标
+        self._latencies = deque()  # 时间窗口内各帧的 latency/延迟
+        self._lost_frames = 0  # 总 lost frame/丢帧数
+        self._total_frames = 0  # 根据帧 ID 推算的预期总帧数
 
     def _update_performance_metrics(self, timestamp, frame_id, receive_time):
-        # Update latency
+        # 更新延迟
         latency = receive_time - timestamp
         self._latencies.append(latency)
 
-        # Remove latencies outside the time window
+        # 移除时间窗口之外的延迟数据
         while self._latencies and self._frame_times and self._latencies[0] < receive_time - self._time_window:
             self._latencies.popleft()
 
-        # Update frame times
+        # 更新帧时间戳
         self._frame_times.append(receive_time)
-        # Remove timestamps outside the time window
+        # 移除时间窗口之外的时间戳
         while self._frame_times and self._frame_times[0] < receive_time - self._time_window:
             self._frame_times.popleft()
 
-        # Update frame counts for lost frame calculation
+        # 更新帧计数，用于丢帧计算
         expected_frame_id = self._last_frame_id + 1 if self._last_frame_id != -1 else frame_id
         if frame_id != expected_frame_id:
             lost = frame_id - expected_frame_id
@@ -98,10 +98,10 @@ class ImageClient:
 
     def _print_performance_metrics(self, receive_time):
         if self._frame_count % 30 == 0:
-            # Calculate real-time FPS
+            # 计算实时 fps/帧率
             real_time_fps = len(self._frame_times) / self._time_window if self._time_window > 0 else 0
 
-            # Calculate latency metrics
+            # 计算延迟指标
             if self._latencies:
                 avg_latency = sum(self._latencies) / len(self._latencies)
                 max_latency = max(self._latencies)
@@ -110,7 +110,7 @@ class ImageClient:
             else:
                 avg_latency = max_latency = min_latency = jitter = 0
 
-            # Calculate lost frame rate
+            # 计算丢帧率
             lost_frame_rate = (self._lost_frames / self._total_frames) * 100 if self._total_frames > 0 else 0
 
             logger_mp.info(f"[Image Client] Real-time FPS: {real_time_fps:.2f}, Avg Latency: {avg_latency*1000:.2f} ms, Max Latency: {max_latency*1000:.2f} ms, \
@@ -125,7 +125,7 @@ class ImageClient:
 
     
     def receive_process(self):
-        # Set up ZeroMQ context and socket
+        # 创建 ZeroMQ/ZMQ 上下文和套接字
         self._context = zmq.Context()
         self._socket = self._context.socket(zmq.SUB)
         self._socket.connect(f"tcp://{self._server_address}:{self._port}")
@@ -134,14 +134,14 @@ class ImageClient:
         logger_mp.info("Image client has started, waiting to receive data...")
         try:
             while self.running:
-                # Receive message
+                # 接收消息
                 message = self._socket.recv()
                 receive_time = time.time()
 
                 if self._enable_performance_eval:
                     header_size = struct.calcsize('dI')
                     try:
-                        # Attempt to extract header and image data
+                        # 尝试解析消息头和图像数据
                         header = message[:header_size]
                         jpg_bytes = message[header_size:]
                         timestamp, frame_id = struct.unpack('dI', header)
@@ -149,9 +149,9 @@ class ImageClient:
                         logger_mp.warning(f"[Image Client] Error unpacking header: {e}, discarding message.")
                         continue
                 else:
-                    # No header, entire message is image data
+                    # 无消息头，整条消息均为图像数据
                     jpg_bytes = message
-                # Decode image
+                # 解码图像
                 np_img = np.frombuffer(jpg_bytes, dtype=np.uint8)
                 current_image = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
                 if current_image is None:
@@ -181,7 +181,7 @@ class ImageClient:
             self._close()
 
 if __name__ == "__main__":
-    # example1
+    # 示例1
     # tv_img_shape = (720, 1280, 3)
     # img_shm = shared_memory.SharedMemory(create=True, size=np.prod(tv_img_shape) * np.uint8().itemsize)
     # img_array = np.ndarray(tv_img_shape, dtype=np.uint8, buffer=img_shm.buf)
@@ -213,8 +213,8 @@ if __name__ == "__main__":
     # img_shm.close()
     # img_shm.unlink()
 
-    # example2
-    # Initialize the client with performance evaluation enabled
-    # client = ImageClient(image_show = True, server_address='127.0.0.1', Unit_Test=True) # local test
-    client = ImageClient(image_show = True, server_address='192.168.123.116', Unit_Test=False) # deployment test
+    # 示例2
+    # 初始化客户端并开启性能评估
+    # client = ImageClient(image_show = True, server_address='127.0.0.1', Unit_Test=True) # 本地测试
+    client = ImageClient(image_show = True, server_address='192.168.123.116', Unit_Test=False) # 部署测试
     client.receive_process()

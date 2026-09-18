@@ -32,9 +32,9 @@ class RobotName(enum.Enum):
 
 
 class RetargetingType(enum.Enum):
-    vector = enum.auto()  # For teleoperation, no finger closing prior
-    position = enum.auto()  # For offline data processing, especially hand-object interaction data
-    dexpilot = enum.auto()  # For teleoperation, with finger closing prior
+    vector = enum.auto()  # 用于遥操作，无手指闭合先验
+    position = enum.auto()  # 用于离线数据处理，尤其是手-物交互数据
+    dexpilot = enum.auto()  # 用于遥操作，带手指闭合先验
 
 
 class HandType(enum.Enum):
@@ -66,7 +66,7 @@ def get_default_config_path(
 
     robot_name_str = ROBOT_NAME_MAP[robot_name]
     hand_type_str = hand_type.name
-    if "gripper" in robot_name_str:  # For gripper robots, only use gripper config file.
+    if "gripper" in robot_name_str:  # 对于夹爪机器人，只使用夹爪配置文件。
         if retargeting_type == RetargetingType.dexpilot:
             config_name = f"{robot_name_str}_dexpilot.yml"
         else:
